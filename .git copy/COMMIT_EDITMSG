@@ -1,0 +1,68 @@
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch master
+#
+# Initial commit
+#
+# Changes to be committed:
+#	new file:   .vscode/settings.json
+#	new file:   README.md
+#	new file:   bin/App.class
+#	new file:   bin/Main.class
+#	new file:   bin/controller/ApplicantController.class
+#	new file:   bin/controller/ApplicantController1.class
+#	new file:   bin/controller/HDBManagerController.class
+#	new file:   bin/controller/HDBOfficerController.class
+#	new file:   bin/model/Applicant.class
+#	new file:   bin/model/BTOApplication.class
+#	new file:   bin/model/BTOProject.class
+#	new file:   bin/model/Enquiry.class
+#	new file:   bin/model/FlatBooking.class
+#	new file:   bin/model/HDBManager.class
+#	new file:   bin/model/HDBOfficer.class
+#	new file:   bin/model/User.class
+#	new file:   bin/service/ApplicantService.class
+#	new file:   bin/service/ApplicantServiceImpl.class
+#	new file:   bin/service/HDBManagerService.class
+#	new file:   bin/service/HDBManagerServiceImpl.class
+#	new file:   bin/service/HDBOfficerService.class
+#	new file:   bin/service/HDBOfficerServiceImpl.class
+#	new file:   src/App.java
+#	new file:   src/Main.java
+#	new file:   src/controller/ApplicantController.class
+#	new file:   src/controller/ApplicantController.java
+#	new file:   src/controller/ApplicantController1.class
+#	new file:   src/controller/ApplicantController1.java
+#	new file:   src/controller/HDBManagerController.class
+#	new file:   src/controller/HDBManagerController.java
+#	new file:   src/controller/HDBOfficerController.class
+#	new file:   src/controller/HDBOfficerController.java
+#	new file:   src/model/Applicant.class
+#	new file:   src/model/Applicant.java
+#	new file:   src/model/BTOApplication.class
+#	new file:   src/model/BTOApplication.java
+#	new file:   src/model/BTOProject.class
+#	new file:   src/model/BTOProject.java
+#	new file:   src/model/Enquiry.class
+#	new file:   src/model/Enquiry.java
+#	new file:   src/model/FlatBooking.java
+#	new file:   src/model/HDBManager.java
+#	new file:   src/model/HDBOfficer.class
+#	new file:   src/model/HDBOfficer.java
+#	new file:   src/model/User.class
+#	new file:   src/model/User.java
+#	new file:   src/service/ApplicantService.class
+#	new file:   src/service/ApplicantService.java
+#	new file:   src/service/ApplicantServiceImpl.class
+#	new file:   src/service/ApplicantServiceImpl.java
+#	new file:   src/service/HDBManagerService.class
+#	new file:   src/service/HDBManagerService.java
+#	new file:   src/service/HDBManagerServiceImpl.class
+#	new file:   src/service/HDBManagerServiceImpl.java
+#	new file:   src/service/HDBOfficerService.class
+#	new file:   src/service/HDBOfficerService.java
+#	new file:   src/service/HDBOfficerServiceImpl.class
+#	new file:   src/service/HDBOfficerServiceImpl.java
+#
