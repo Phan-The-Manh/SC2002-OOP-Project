@@ -3,7 +3,8 @@ package service;
 public class HDBManagerServiceImpl implements HDBManagerService {
 
     @Override
-    public void checkLogin(String userId, String password) {
+    public boolean checkLogin(String userId, String password) {
+        return false; // Placeholder for actual login check logic
     }
 
     // @Override

@@ -1,19 +1,71 @@
 package service;
 
+import data.Database;
+import java.util.List;
 import model.*;
 
 public class ApplicantServiceImpl implements ApplicantService {
 
     @Override
-    public void checkLogin(String userId, String password) {
+    public Applicant checkLogin(String userId, String password) {
+        Database db = new Database();
+        boolean userFound = false;  // Flag to check if the user exists
+        boolean passwordCorrect = false;  // Flag to check if the password is correct
+
+        // Check in Applicants list from the Database
+        for (Applicant applicant : db.applicantList) {
+            if (applicant.getUserId().equals(userId)) {
+                userFound = true;  // User exists in the Applicants list
+                if (applicant.getPassword().equals(password)) {
+                    passwordCorrect = true;  // Correct password
+                    System.out.println("Login successful for Applicant: " + applicant.getName());
+                    return applicant;
+                }
+                break;  // Stop after finding the user
+            }
+        }
+
+        // Handle cases where user or password is incorrect
+        if (!userFound) {
+            System.out.println("No applicant found with the given NRIC.");
+        } else if (!passwordCorrect) {
+            System.out.println("Incorrect password. Please try again.");
+        }
+        return null;
     }
 
     @Override
-    public void applyForProject(Applicant applicant, BTOProject project) {
-        BTOApplication application = new BTOApplication(applicant, project);
-        applicant.addApplication(application);
-        System.out.println("Application submitted for project: " + project.getProjectName());
+    public void viewAvailableProjects() {
+        Database db = new Database();
+        db.getBTOProjectList();  // Fetch available projects from the database
     }
+
+    @Override
+    public void applyForProject(Applicant applicant, String projectName) {
+        Database db = new Database();
+        List<BTOProject> projectList = db.btoProjectList;
+    
+        // Find project by name
+        BTOProject project = null;
+        for (BTOProject p : projectList) {
+            if (p.getProjectName().equalsIgnoreCase(projectName.trim())) {
+                project = p;
+                break;
+            }
+        }
+    
+        if (project != null) {
+            BTOApplication application = new BTOApplication(applicant, project.getProjectName());  // Create a new application
+            applicant.getApplications().add(application);  // Add application to the applicant's list
+            System.out.println("Application submitted for project: " + projectName);
+            BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
+            btoApplicationService.saveBTOApplication(application);
+            System.out.println(application);  // Print application details
+        } else {
+            System.out.println("Project not found: " + projectName);
+        }        
+    }
+    
 
     @Override
     public void requestWithdrawal(Applicant applicant, BTOApplication application) {

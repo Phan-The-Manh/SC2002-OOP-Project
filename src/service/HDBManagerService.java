@@ -1,7 +1,7 @@
 package service;
 
 public interface HDBManagerService {
-    void checkLogin(String userId, String password);
+    boolean checkLogin(String userId, String password);
     // void createProject(HDBManager manager, BTOProject project);
     // void editProject(HDBManager manager, BTOProject project, String newProjectName, String newNeighborhood);
     // void deleteProject(HDBManager manager, BTOProject project);

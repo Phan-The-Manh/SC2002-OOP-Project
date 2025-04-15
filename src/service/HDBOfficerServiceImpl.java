@@ -1,18 +1,17 @@
 package service;
 
-import models.*;
+import model.*;
 
 public class HDBOfficerServiceImpl implements HDBOfficerService {
     
     @Override
-    public void checkLogin(String userId, String password) {
+    public Applicant checkLogin(String userId, String password) {
+        return null; // Placeholder for actual login check logic
     }
 
     @Override
-    public void applyForProject(Applicant applicant, BTOProject project) {
-        BTOApplication application = new BTOApplication(applicant, project);
-        applicant.addApplication(application);
-        System.out.println("Application submitted for project: " + project.getProjectName());
+    public void applyForProject(Applicant applicant, String projectName) {
+
     }
 
     @Override
