@@ -34,7 +34,7 @@ public class ChooseRole {
                     ApplicantController applicantController = new ApplicantController();
                     loginSuccessful = applicantController.login();
                     if (loginSuccessful) {
-                        ChooseAction applicantAction = new ChooseAction();
+                        ApplicantAction applicantAction = new ApplicantAction();
                         applicantAction.applicantAction();
                     }
                     break;
@@ -46,9 +46,13 @@ public class ChooseRole {
                     break;
 
                 case 3:
-                    // System.out.println("You selected: Manager");
-                    // HDBManagerController managerController = new HDBManagerController();
-                    // loginSuccessful = managerController.login();
+                    System.out.println("You selected: Manager");
+                    HDBManagerController managerController = new HDBManagerController();
+                    loginSuccessful = managerController.login();
+                    if (loginSuccessful) {
+                        ManagerAction managerAction = new ManagerAction();
+                        managerAction.managerAction();
+                    }
                     break;
 
                 default:

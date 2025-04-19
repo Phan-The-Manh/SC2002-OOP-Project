@@ -79,6 +79,32 @@ public class Database {
         }
     }
 
+    private void loadOfficers(String path) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(path, StandardCharsets.UTF_8))) {
+            reader.readLine(); // Skip header
+            String line;
+    
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+    
+                if (parts.length >= 5) {
+                    String name = parts[0].trim();
+                    String nric = parts[1].trim();
+                    int age = Integer.parseInt(parts[2].trim());
+                    String maritalStatus = parts[3].trim();
+                    String password = parts[4].trim();
+    
+                    HDBOfficer officer = new HDBOfficer(name, nric, age, maritalStatus, password);
+                    hdbOfficerList.add(officer);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to load officers: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+
     private void loadManagers(String path) {
         try (BufferedReader reader = new BufferedReader(new FileReader(path, StandardCharsets.UTF_8))) {
             reader.readLine(); // Skip header
@@ -94,78 +120,90 @@ public class Database {
         }
     }
 
-    private void loadOfficers(String path) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(path, StandardCharsets.UTF_8))) {
-            reader.readLine(); // Skip header
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length >= 5) {
-                    hdbOfficerList.add(new HDBOfficer(parts[0].trim(), parts[1].trim(), Integer.parseInt(parts[2].trim()), parts[3].trim(), parts[4].trim()));
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to load officers: " + e.getMessage());
-        }
-    }
-
     private void loadProjects(String path) {
         try (BufferedReader reader = new BufferedReader(new FileReader(path, StandardCharsets.UTF_8))) {
             reader.readLine(); // Skip header
             String line;
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy");
-
+    
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-
-                if (parts.length >= 13) {
-                    String projectName = parts[0].trim();
-                    String neighborhood = parts[1].trim();
-                    int units1 = Integer.parseInt(parts[3].trim());
-                    double price1 = Double.parseDouble(parts[4].trim());
-                    int units2 = Integer.parseInt(parts[6].trim());
-                    double price2 = Double.parseDouble(parts[7].trim());
-                    LocalDate openDate = LocalDate.parse(parts[8].trim(), formatter);
-                    LocalDate closeDate = LocalDate.parse(parts[9].trim(), formatter);
-                    String managerName = parts[10].trim();
-                    int officerSlot = Integer.parseInt(parts[11].trim());
-
-                    String[] officerNames = parts[12].replace("\"", "").split(",");
-                    List<HDBOfficer> assignedOfficers = new ArrayList<>();
-                    for (String name : officerNames) {
-                        hdbOfficerList.stream()
-                                .filter(o -> o.getName().equalsIgnoreCase(name.trim()))
+                String[] parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+    
+                if (parts.length >= 14) {
+                    try {
+                        String projectName = parts[0].trim();
+                        String neighborhood = parts[1].trim();
+                        int units1 = Integer.parseInt(parts[3].trim());
+                        double price1 = Double.parseDouble(parts[4].trim());
+                        int units2 = Integer.parseInt(parts[6].trim());
+                        double price2 = Double.parseDouble(parts[7].trim());
+    
+                        LocalDate openDate = LocalDate.parse(parts[8].trim(), formatter);
+                        LocalDate closeDate = LocalDate.parse(parts[9].trim(), formatter);
+    
+                        String managerName = parts[10].trim();
+                        int officerSlot = Integer.parseInt(parts[11].trim());
+    
+                        // Parse visibility
+                        boolean visible = Boolean.parseBoolean(parts[12].trim());
+    
+                        // Parse officers with semicolon separator
+                        List<HDBOfficer> assignedOfficers = new ArrayList<>();
+                        String officerField = parts[13].trim().replace("\"", "");
+                        if (!officerField.isEmpty()) {
+                            String[] officerNames = officerField.split(";");
+                            for (String name : officerNames) {
+                                String trimmedName = name.trim();
+                                HDBOfficer officer = hdbOfficerList.stream()
+                                    .filter(o -> o.getName().trim().equalsIgnoreCase(trimmedName))
+                                    .findFirst()
+                                    .orElse(null);
+    
+                                if (officer != null) {
+                                    assignedOfficers.add(officer);
+                                }
+                            }
+                        }
+    
+                        HDBManager manager = hdbManagerList.stream()
+                                .filter(m -> m.getName().equalsIgnoreCase(managerName))
                                 .findFirst()
-                                .ifPresent(assignedOfficers::add);
-                    }
-
-                    HDBManager manager = hdbManagerList.stream()
-                            .filter(m -> m.getName().equalsIgnoreCase(managerName))
-                            .findFirst()
-                            .orElse(null);
-
-                    if (manager != null) {
-                        BTOProject project = new BTOProject(
-                                projectName,
-                                neighborhood,
-                                units1,
-                                price1,
-                                units2,
-                                price2,
-                                java.sql.Date.valueOf(openDate),
-                                java.sql.Date.valueOf(closeDate),
-                                manager,
-                                officerSlot,
-                                assignedOfficers
-                        );
-                        btoProjectList.add(project);
+                                .orElse(null);
+    
+                        if (manager != null) {
+                            BTOProject project = new BTOProject(
+                                    projectName,
+                                    neighborhood,
+                                    units1,
+                                    price1,
+                                    units2,
+                                    price2,
+                                    java.sql.Date.valueOf(openDate),
+                                    java.sql.Date.valueOf(closeDate),
+                                    manager,
+                                    officerSlot,
+                                    assignedOfficers
+                            );
+                            project.setVisibility(visible); // ← Make sure your BTOProject has this method
+                            btoProjectList.add(project);
+                        }
+    
+                    } catch (Exception e) {
+                        System.err.println("Error processing line: " + line);
+                        e.printStackTrace();
                     }
                 }
             }
         } catch (Exception e) {
             System.err.println("Failed to load projects: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+    
+    
+    
+    
+    
 
     public void getBTOProjectList() {
         System.out.println("\n===== BTO Projects =====");
@@ -263,6 +301,6 @@ public class Database {
     }
     
     
-    
+
     
 }

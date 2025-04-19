@@ -2,7 +2,7 @@ package controller;
 
 import java.util.Scanner;
 
-public class ChooseAction {
+public class ApplicantAction {
     public void applicantAction() {
         ApplicantController applicantController = new ApplicantController();
         Scanner scanner = new Scanner(System.in);
