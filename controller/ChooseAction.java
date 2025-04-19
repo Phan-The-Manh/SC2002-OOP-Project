@@ -41,9 +41,36 @@ public class ChooseAction {
                     case 5:
                         applicantController.submitEnquiry();
                         break;
-                    // case 6:
-                    //     submitEnquiry();
-                    //     break;
+                    case 6:
+                        System.out.println("\n===== Enquiry Actions =====");
+                        System.out.println("1. View Enquiries");
+                        System.out.println("2. Edit Enquiry");
+                        System.out.println("3. Delete Enquiry");
+                        int enquiryChoice;
+                        while (true) {
+                            System.out.print("Enter your enquiry choice: ");
+                            if (scanner.hasNextInt()) {
+                                enquiryChoice = scanner.nextInt();
+                                break; // valid input, exit loop
+                            } else {
+                                System.out.println("Invalid input. Please enter a valid choice.");
+                                scanner.next(); // consume the invalid input
+                            }
+                        }
+                        switch(enquiryChoice){
+                            case 1:
+                                applicantController.viewEnquiry();
+                                break;
+                            case 2:
+                                applicantController.editEnquiry();
+                                break;
+                            case 3:
+                                applicantController.deleteEnquiry();
+                                break;
+                            default:
+                                System.out.println("Invalid choice. Please try again.");
+                        }
+                        break;
 
                     case 7:
                         System.out.println("Logging out...");

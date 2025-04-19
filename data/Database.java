@@ -198,12 +198,11 @@ public class Database {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",", -1); // handle empty fields
-                if (parts.length >= 5) {
+                if (parts.length >= 4) {
                     String applicantId = parts[0].trim();
                     String projectName = parts[1].trim();
                     String status = parts[2].trim();
                     String applicationDate = parts[3].trim();
-                    String withdrawalRequested = parts[4].trim();
     
                     // Find the applicant
                     Applicant applicant = applicantList.stream()
@@ -216,8 +215,7 @@ public class Database {
                         app.setStatus(status);
                         java.sql.Date date = java.sql.Date.valueOf(applicationDate);
                         app.setApplicationDate(date);
-                        app.setRequestedWithdrawal(Boolean.parseBoolean(withdrawalRequested)); // <- NEW
-    
+
                         btoApplicationList.add(app);
                         applicant.getApplications().add(app);
                     }

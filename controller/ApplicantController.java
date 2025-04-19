@@ -132,4 +132,74 @@ public class ApplicantController {
         // Delegate to service
         applicantService.submitEnquiry(applicant, enquiryText);
     }
+    void editEnquiry(){
+        // Get current user
+        Applicant applicant = CurrentUser.<Applicant>getInstance().getUser();
+    
+        if (applicant == null) {
+            System.out.println("No applicant is currently logged in.");
+            return;
+        } 
+       // Prompt for enquiry index and text
+        String newText;
+        int index;
+        while (true) {
+            System.out.print("Enter your enquiry index: ");
+            if (scanner.hasNextInt()) {
+                index = scanner.nextInt();
+                scanner.nextLine();
+                break; // valid input, exit loop
+            } else {
+                System.out.println("Invalid input. Please enter a valid index.");
+                scanner.nextLine(); // consume the invalid input
+            }
+        }
+        do {
+           System.out.print("Enter your edited enquiry: ");
+           newText = scanner.nextLine().trim();
+           if (newText.isEmpty()) {
+               System.out.println("Enquiry cannot be empty. Please try again.");
+           }
+        } while (newText.isEmpty());
+   
+       // Delegate to service
+       applicantService.editEnquiry(applicant, index, newText);       
+    }
+
+    void viewEnquiry(){
+        // Get current user
+        Applicant applicant = CurrentUser.<Applicant>getInstance().getUser();
+    
+        if (applicant == null) {
+            System.out.println("No applicant is currently logged in.");
+            return;
+        } 
+
+        applicantService.viewEnquiry(applicant);
+    }
+
+    void deleteEnquiry(){
+        // Get current user
+        Applicant applicant = CurrentUser.<Applicant>getInstance().getUser();
+    
+        if (applicant == null) {
+            System.out.println("No applicant is currently logged in.");
+            return;
+        } 
+       // Prompt for enquiry index
+        int index;
+        while (true) {
+            System.out.print("Enter your enquiry index: ");
+            if (scanner.hasNextInt()) {
+                index = scanner.nextInt();
+                break; // valid input, exit loop
+            } else {
+                System.out.println("Invalid input. Please enter a valid index.");
+                scanner.next(); // consume the invalid input
+            }
+        }
+       // Delegate to service
+       applicantService.deleteEnquiry(applicant, index);       
+    }     
+    
 }

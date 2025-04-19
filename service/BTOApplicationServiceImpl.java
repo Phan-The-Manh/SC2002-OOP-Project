@@ -1,14 +1,12 @@
 package service;
 
-import model.BTOApplication;
 import data.Database;
-
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import model.BTOApplication;
 
 public class BTOApplicationServiceImpl implements BTOApplicationService {
 
@@ -45,7 +43,7 @@ public class BTOApplicationServiceImpl implements BTOApplicationService {
     
         // Rewrite entire CSV file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/data/BTOApplicationList.csv"))) {
-            writer.write("Applicant ID,Project Name,Status,Application Date,isRequestedWithdrawal\n");
+            writer.write("Applicant ID,Project Name,Status,Application Date\n");
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     
             for (BTOApplication app : db.btoApplicationList) {
@@ -54,8 +52,7 @@ public class BTOApplicationServiceImpl implements BTOApplicationService {
                     app.getApplicant().getUserId() + "," +
                     app.getProjectName() + "," +
                     app.getStatus() + "," +
-                    formattedDate + "," +
-                    app.isRequestedWithdrawal() + "\n"
+                    formattedDate + "\n"
                 );
             }
         } catch (IOException e) {

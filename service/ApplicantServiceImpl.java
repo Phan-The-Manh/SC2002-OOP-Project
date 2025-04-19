@@ -1,17 +1,15 @@
 package service;
 
 import data.Database;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import model.*;
 
 public class ApplicantServiceImpl implements ApplicantService {
+    private DataHandler dataHandler;
+
+    public ApplicantServiceImpl() {
+        this.dataHandler = new DataHandlerImpl(new Database());
+    }
 
     @Override
     public Applicant checkLogin(String userId, String password) {
@@ -74,66 +72,21 @@ public class ApplicantServiceImpl implements ApplicantService {
         }
     
         if (project != null) {
+            // Check if the applicant has already applied for this project
+            for (BTOApplication app : applicant.getApplications()) {
+                if (app.getProjectName().equalsIgnoreCase(projectName)) {
+                    System.out.println("You have already applied for this project.");
+                    return;
+                }
+            }
             BTOApplication application = new BTOApplication(applicant, project.getProjectName());
             applicant.getApplications().add(application);
             System.out.println("Application submitted for project: " + projectName);
-    
-            BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
-            btoApplicationService.saveBTOApplication(application);
+            dataHandler.saveBTOApplication(application);
+
+            // BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
+            // btoApplicationService.saveBTOApplication(application);
             System.out.println(application);
-    
-            // ✅ Update the applicant CSV safely
-            try {
-                File file = new File("src/data/ApplicantList.csv");
-                List<String> updatedLines = new ArrayList<>();
-                BufferedReader reader = new BufferedReader(new FileReader(file));
-                String header = reader.readLine(); // Read header
-                updatedLines.add(header); // Keep header
-    
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    String[] parts = line.split(",", -1);
-    
-                    if (parts[1].trim().equals(applicant.getUserId())) { // Match by NRIC
-    
-                        // Ensure the array has at least 7 columns (up to "Enquiry")
-                        if (parts.length < 7) {
-                            String[] newParts = new String[7];
-                            System.arraycopy(parts, 0, newParts, 0, parts.length);
-                            for (int i = parts.length; i < 7; i++) {
-                                newParts[i] = "";
-                            }
-                            parts = newParts;
-                        }
-    
-                        // Update BTO Application column (index 5)
-                        String existing = parts[5].trim();
-                        if (!existing.contains(project.getProjectName())) {
-                            if (!existing.isEmpty()) {
-                                existing += ";" + project.getProjectName();
-                            } else {
-                                existing = project.getProjectName();
-                            }
-                        }
-                        parts[5] = existing;
-                        updatedLines.add(String.join(",", parts));
-                    } else {
-                        updatedLines.add(line);
-                    }
-                }
-                reader.close();
-    
-                // Write updated content back to file
-                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-                for (String updatedLine : updatedLines) {
-                    writer.write(updatedLine + "\n");
-                }
-                writer.close();
-    
-                System.out.println("CSV updated with new BTO Application.");
-            } catch (IOException e) {
-                System.err.println("Failed to update CSV: " + e.getMessage());
-            }
     
         } else {
             System.out.println("Project not found: " + projectName);
@@ -164,7 +117,6 @@ public class ApplicantServiceImpl implements ApplicantService {
 
     @Override
     public void requestWithdrawal(Applicant applicant, String projectName) {
-        Database db = new Database();
         // Find the application by project name
         BTOApplication application = applicant.getApplications().stream()
             .filter(app -> app.getProjectName().equalsIgnoreCase(projectName))
@@ -174,8 +126,7 @@ public class ApplicantServiceImpl implements ApplicantService {
         if (application != null) {
             application.setStatus("Pending Withdrawal");  // Update status to pending withdrawal
             application.setRequestedWithdrawal(true);
-            BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
-            btoApplicationService.saveBTOApplication(application);
+            dataHandler.saveBTOApplication(application); 
             System.out.println("\nApplication withdrawn successfully!");
             System.out.println("---------------------------------------------");
             System.out.printf("%-20s %-20s\n", "Project Name", "Status");
@@ -186,95 +137,39 @@ public class ApplicantServiceImpl implements ApplicantService {
     }
     
     
-
     @Override
     public void submitEnquiry(Applicant applicant, String enquiryText) {
-        Database db = new Database();
         Enquiry enquiry = new Enquiry(applicant.getUserId(), enquiryText);
         enquiry.setEnquiryDate(new java.sql.Date(System.currentTimeMillis()));
         enquiry.setReply(""); // No reply yet
         enquiry.setReplied(false);
-    
         applicant.addEnquiry(enquiry);
-        db.enquiryList.add(enquiry);  // Add to global list if applicable
-    
-        // Save to EnquiryList.csv
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/data/EnquiryList.csv", true))) {
-            String dateString = enquiry.getEnquiryDate().toString(); // yyyy-MM-dd
-            writer.write(enquiry.getApplicantName() + "," +
-                         enquiry.getEnquiryText() + "," +
-                         enquiry.getReply() + "," +
-                         dateString + "," +
-                         enquiry.isReplied() + "\n");
-        } catch (IOException e) {
-            System.err.println("Failed to save enquiry: " + e.getMessage());
-        }
-    
-        // ✅ Update the applicant's enquiry field in ApplicantList.csv
-        try {
-            File file = new File("src/data/ApplicantList.csv");
-            List<String> updatedLines = new ArrayList<>();
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            String header = reader.readLine(); // Read header
-            updatedLines.add(header); // Keep header
-    
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",", -1);
-                if (parts[1].trim().equals(applicant.getUserId())) { // Match NRIC
-    
-                    // Ensure parts has at least 7 fields
-                    if (parts.length < 7) {
-                        String[] newParts = new String[7];
-                        System.arraycopy(parts, 0, newParts, 0, parts.length);
-                        for (int i = parts.length; i < 7; i++) {
-                            newParts[i] = "";
-                        }
-                        parts = newParts;
-                    }
-    
-                    // Update Enquiry field (index 6)
-                    String existing = parts[6].trim();
-                    if (!existing.contains(enquiryText)) {
-                        if (!existing.isEmpty()) {
-                            existing += ";" + enquiryText;
-                        } else {
-                            existing = enquiryText;
-                        }
-                    }
-                    parts[6] = existing;
-                    updatedLines.add(String.join(",", parts));
-                } else {
-                    updatedLines.add(line);
-                }
-            }
-            reader.close();
-    
-            // Write updated content back to file
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-            for (String updatedLine : updatedLines) {
-                writer.write(updatedLine + "\n");
-            }
-            writer.close();
-    
-            System.out.println("\nEnquiry saved and ApplicantList.csv updated!");
-        } catch (IOException e) {
-            System.err.println("Failed to update ApplicantList.csv: " + e.getMessage());
-        }
-    
+        Database db = new Database();
+        EnquiryServiceImpl enquiryService = new EnquiryServiceImpl(db); 
+        enquiryService.saveEnquiry(enquiry); // Save the enquiry to the database
         System.out.println("\nEnquiry submitted successfully!");
         System.out.println("---------------------------------------------");
         System.out.println(enquiry.toString());
     }
-    
-    
-
 
     @Override
+    public void viewEnquiry(Applicant applicant){
+        System.out.println("\nList of Enquiries");
+        System.out.println("---------------------------------------------");
+        for (int i = 0; i < applicant.getEnquiries().size(); i++){
+                System.out.println("Index: " + i +" | " + applicant.getEnquiries().get(i).toString());
+        }
+    }
+    
+    @Override
     public void editEnquiry(Applicant applicant, int index, String newText) {
+        Database db = new Database();
         if (index >= 0 && index < applicant.getEnquiries().size()) {
             Enquiry enquiry = applicant.getEnquiries().get(index);
+            EnquiryServiceImpl enquiryService = new EnquiryServiceImpl(db);
+            enquiryService.editEnquiry(enquiry,newText);
             enquiry.setEnquiryText(newText);
+            applicant.getEnquiries().set(index, enquiry);
             System.out.println("Enquiry updated: " + newText);
         } else {
             System.out.println("Invalid enquiry index.");
@@ -283,13 +178,15 @@ public class ApplicantServiceImpl implements ApplicantService {
 
     @Override
     public void deleteEnquiry(Applicant applicant, int index) {
+        Database db = new Database();
         if (index >= 0 && index < applicant.getEnquiries().size()) {
+            Enquiry enquiryToDelete = applicant.getEnquiries().get(index);
             applicant.getEnquiries().remove(index);
+            EnquiryServiceImpl enquiryService = new EnquiryServiceImpl(db);
+            enquiryService.deleteEnquiry(enquiryToDelete);
             System.out.println("Enquiry deleted at index: " + index);
         } else {
             System.out.println("Invalid enquiry index.");
         }
     }
-
-
 }
