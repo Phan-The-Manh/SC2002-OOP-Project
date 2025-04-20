@@ -1,51 +1,45 @@
 package model;
 
-import java.util.Date;
-
 public class FlatBooking {
-    private String flatType;
-    private int flatNumber;
-    private Date bookingDate;
+    private int flatType;
+    private BTOProject project;
+    private Applicant applicant;
 
     // Constructor
-    public FlatBooking(String flatType, int flatNumber) {
+    public FlatBooking(Applicant applicant, BTOProject project, int flatType) {
         this.flatType = flatType;
-        this.flatNumber = flatNumber;
-        this.bookingDate = new Date();
+        this.applicant = applicant;
+        this.project = project;
     }
 
     // Getter for flatType
-    public String getFlatType() {
+    public int getFlatType() {
         return flatType;
     }
 
     // Setter for flatType
-    public void setFlatType(String flatType) {
+    public void setFlatType(int flatType) {
         this.flatType = flatType;
     }
 
-    // Getter for flatNumber
-    public int getFlatNumber() {
-        return flatNumber;
+    public Applicant getApplicant(){
+        return applicant;
     }
 
-    // Setter for flatNumber
-    public void setFlatNumber(int flatNumber) {
-        this.flatNumber = flatNumber;
+    public void setApplicant(Applicant applicant){
+        this.applicant = applicant;
     }
 
-    // Getter for bookingDate
-    public Date getBookingDate() {
-        return bookingDate;
+    public BTOProject getProject(){
+        return project;
     }
 
-    // Setter for bookingDate
-    public void setBookingDate(Date bookingDate) {
-        this.bookingDate = bookingDate;
+    public void setProject(BTOProject project){
+        this.project = project;
     }
 
     // Method to generate a receipt
-    public void generateReceipt() {
-        System.out.println("Receipt: Flat " + flatType + " - No. " + flatNumber + ", Booked on: " + bookingDate);
-    }
+    //public void generateReceipt() {
+      //  System.out.println("Receipt: Flat " + flatType + " - No. " + flatNumber + ", Booked on: " + bookingDate);
+    //}
 }

@@ -7,12 +7,14 @@ public class Enquiry {
     private String enquiryText;
     private String reply = null;
     private Date enquiryDate;
+    private String projectName;
     private boolean isReplied = false;
 
     // Constructor
-    public Enquiry(String applicantName, String enquiryText) {
+    public Enquiry(String applicantName, String enquiryText, String projectName) {
         this.applicantName = applicantName;
         this.enquiryText = enquiryText;
+        this.projectName = projectName;
         this.enquiryDate = new Date();
     }
 
@@ -66,9 +68,17 @@ public class Enquiry {
         this.isReplied = isReplied;
     }
 
+    public String getProjectName(){
+        return projectName;
+    }
+
+    public void setProjectName(String projectName){
+        this.projectName = projectName;
+    }
+
     // Overridden toString method
     @Override
     public String toString() {
-        return "Enquiry: " + enquiryText + " | Reply: " + (reply != null ? reply : "Pending");
+        return "Enquiry: " + enquiryText + " | Project Name: " + projectName + " | Reply: " + (reply != null ? reply : "Pending");
     }
 }

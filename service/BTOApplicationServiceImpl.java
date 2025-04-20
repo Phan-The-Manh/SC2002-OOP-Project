@@ -16,6 +16,28 @@ public class BTOApplicationServiceImpl implements BTOApplicationService {
         this.db = db;
     }
 
+    //Method to save BTOApplication List to CSV file
+    private void saveToCsv(Database db){
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/data/BTOApplicationList.csv"))) {
+            writer.write("Applicant ID,Project Name,Status,Room Type,Application Date,isRequestedWithdrawal\n");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    
+            for (BTOApplication app : db.btoApplicationList) {
+                String formattedDate = dateFormat.format(app.getApplicationDate());
+                writer.write(
+                    app.getApplicant().getUserId() + "," +
+                    app.getProjectName() + "," +
+                    app.getStatus() + "," +
+                    app.getRoomType() + "," +
+                    formattedDate + "," +
+                    app.isRequestedWithdrawal() + "\n"
+                );
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public List<BTOApplication> getAllBTOApplications() {
         // Return all BTO applications from the database (in-memory list)
@@ -42,45 +64,31 @@ public class BTOApplicationServiceImpl implements BTOApplicationService {
         }
     
         // Rewrite entire CSV file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/data/BTOApplicationList.csv"))) {
-            writer.write("Applicant ID,Project Name,Status,Application Date\n");
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    
-            for (BTOApplication app : db.btoApplicationList) {
-                String formattedDate = dateFormat.format(app.getApplicationDate());
-                writer.write(
-                    app.getApplicant().getUserId() + "," +
-                    app.getProjectName() + "," +
-                    app.getStatus() + "," +
-                    formattedDate + "\n"
-                );
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        saveToCsv(db);
     }
     
 
 
-    // @Override
-    // public void deleteBTOApplication(String applicationId) {
-    //     // Find and remove the application from the in-memory list
-    //     BTOApplication applicationToDelete = null;
-    //     for (BTOApplication application : db.btoApplicationList) {
-    //         if (application.getApplicantId().equals(applicationId)) {
-    //             applicationToDelete = application;
-    //             break;
-    //         }
-    //     }
+    public void deleteBTOApplication(BTOApplication deletedApplication) {
+    // Find and remove the application from the in-memory list
+        boolean isExist = false;
+        for (BTOApplication application : db.btoApplicationList) {
+            if (application.getApplicant().getUserId().equals(deletedApplication.getApplicant().getUserId())) {
+                isExist = true;
+                db.btoApplicationList.remove(application);
+                break;
+            }
+        }
 
-    //     if (applicationToDelete != null) {
-    //         db.btoApplicationList.remove(applicationToDelete);
-    //         // Call method to save the updated list back to the CSV file
-    //         saveToCSV();
-    //         System.out.println("BTO Application deleted: " + applicationToDelete);
-    //     } else {
-    //         System.out.println("Application with ID " + applicationId + " not found.");
-    //     }
-    // }
+        if (isExist) {
+            // Call method to save the updated list back to the CSV file
+            saveToCsv(db);
+            System.out.println("BTO Application deleted: " + deletedApplication.getApplicant().getUserId());
+        } else {
+            System.out.println("Application with ID " + deletedApplication.getApplicant().getUserId() + " not found.");
+        }
+    }
+
+    
 
 }

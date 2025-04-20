@@ -1,7 +1,7 @@
 package service;
 
-import model.BTOApplication;
 import java.util.List;
+import model.BTOApplication;
 
 public interface BTOApplicationService {
 
@@ -9,8 +9,8 @@ public interface BTOApplicationService {
     List<BTOApplication> getAllBTOApplications();
 
     // Method to save a new BTO application
-    void saveBTOApplication(BTOApplication application);
+    public void saveBTOApplication(BTOApplication application);
 
     // Method to delete a BTO application by ID or some identifier
-    // void deleteBTOApplication(BTOApplication application);
+    public void deleteBTOApplication(BTOApplication application);
 }

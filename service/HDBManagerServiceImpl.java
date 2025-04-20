@@ -26,8 +26,6 @@ public class HDBManagerServiceImpl implements HDBManagerService {
         }
 
         for (HDBManager manager : db.hdbManagerList) {
-            System.out.println("Comparing with Manager: " + manager.getUserId() + " - " + manager.getPassword());
-
             if (manager.getUserId().equals(userId)) {
                 userFound = true;
                 if (manager.getPassword().equals(password)) {

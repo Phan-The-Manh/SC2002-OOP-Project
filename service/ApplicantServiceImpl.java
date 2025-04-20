@@ -2,18 +2,18 @@ package service;
 
 import data.Database;
 import java.util.List;
+import java.util.Scanner;
 import model.*;
 
 public class ApplicantServiceImpl implements ApplicantService {
-    private DataHandler dataHandler;
+    private Database db;
 
     public ApplicantServiceImpl() {
-        this.dataHandler = new DataHandlerImpl(new Database());
+        this.db = new Database();
     }
 
     @Override
     public Applicant checkLogin(String userId, String password) {
-        Database db = new Database();
         boolean userFound = false;  // Flag to check if the user exists
         boolean passwordCorrect = false;  // Flag to check if the password is correct
     
@@ -27,9 +27,6 @@ public class ApplicantServiceImpl implements ApplicantService {
     
         // Check in Applicants list from the Database
         for (Applicant applicant : db.applicantList) {
-            // Add debug log to see what values are being compared
-            System.out.println("Comparing with Applicant: " + applicant.getUserId() + " - " + applicant.getPassword());
-            
             if (applicant.getUserId().equals(userId)) {
                 userFound = true;  // User exists in the Applicants list
                 if (applicant.getPassword().equals(password)) {
@@ -52,18 +49,22 @@ public class ApplicantServiceImpl implements ApplicantService {
     
 
     @Override
-    public void viewAvailableProjects() {
-        Database db = new Database();
-        db.getBTOProjectList();  // Fetch available projects from the database
+    public void viewAvailableProjects(Applicant applicant) {
+        if (applicant.getMaritalStatus().equals("Single") && applicant.getAge() >= 35){
+            db.get2RoomBTOProjectList();
+        }
+        else 
+            db.getBTOProjectList();  // Fetch available projects from the database*/
     }
 
     @Override
-    public void applyForProject(Applicant applicant, String projectName) {
-        Database db = new Database();
+    public void applyForProject(Applicant applicant, String projectName, int roomType) {
         List<BTOProject> projectList = db.btoProjectList;
-    
+        if (applicant.getMaritalStatus().equals("Single") && applicant.getAge() >= 35 && roomType == 2)
+            System.out.println("Room type is not applicable");
+        
         // Find project by name
-        BTOProject project = null;
+        else{BTOProject project = null;
         for (BTOProject p : projectList) {
             if (p.getProjectName().equalsIgnoreCase(projectName.trim())) {
                 project = p;
@@ -72,24 +73,22 @@ public class ApplicantServiceImpl implements ApplicantService {
         }
     
         if (project != null) {
-            // Check if the applicant has already applied for this project
-            for (BTOApplication app : applicant.getApplications()) {
-                if (app.getProjectName().equalsIgnoreCase(projectName)) {
-                    System.out.println("You have already applied for this project.");
-                    return;
-                }
-            }
             BTOApplication application = new BTOApplication(applicant, project.getProjectName());
-            applicant.getApplications().add(application);
-            System.out.println("Application submitted for project: " + projectName);
-            dataHandler.saveBTOApplication(application);
-
-            // BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
-            // btoApplicationService.saveBTOApplication(application);
-            System.out.println(application);
-    
+            if (application != null) {
+                application.setStatus("Pending");
+                application.setRequestedWithdrawal(false);
+                application.setRoomType(roomType);
+                applicant.setApplications(application);
+                BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
+                btoApplicationService.saveBTOApplication(application);
+                System.out.println("\nApplication applied successfully!");
+                System.out.println("---------------------------------------------");
+                System.out.printf("%-20s %-20s %-20s\n", "Project Name", "Room Type", "Status");
+                System.out.printf("%-20s %-20d %-20s\n", application.getProjectName(),application.getRoomType(), application.getStatus());
+            }   
         } else {
             System.out.println("Project not found: " + projectName);
+        }
         }
     }
     
@@ -98,55 +97,73 @@ public class ApplicantServiceImpl implements ApplicantService {
     @Override
     public void viewApplicationStatus(Applicant applicant) {
         // Check if the applicant has any applications
-        if (applicant.getApplications().isEmpty()) {
+        if (applicant.getApplications() == null) {
             System.out.println("No applications found for this applicant.");
         } else {
             // Print the header of the table
             System.out.println(String.format("%-20s %-20s", "Project Name", "Application Status"));
             System.out.println("-----------------------------------------------");
-        
-            // Loop through all applications and print the details in a table-like format
-            for (BTOApplication application : applicant.getApplications()) {
-                System.out.println(String.format("%-20s %-20s", application.getProjectName(), application.getStatus()));
+            BTOApplication application = applicant.getApplications();
+            System.out.println(String.format("%-20s %-20s", application.getProjectName(), application.getStatus()));
+            if(application.getStatus().equals("Successful")){
+                System.out.print("Do you want to request booking for this project? (y/n): ");
+                Scanner sc = new Scanner(System.in);
+                String response = sc.next();
+                if (response.equalsIgnoreCase("y")) {
+                    application.setStatus("Pending Booking");
+                    BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
+                    btoApplicationService.saveBTOApplication(application);
+                    System.out.println("Request booking for project: " + application.getProjectName());
+                }             
             }
         }
+        
     }
-    
-    
 
 
     @Override
-    public void requestWithdrawal(Applicant applicant, String projectName) {
-        // Find the application by project name
-        BTOApplication application = applicant.getApplications().stream()
-            .filter(app -> app.getProjectName().equalsIgnoreCase(projectName))
-            .findFirst()
-            .orElse(null);
+    public void requestWithdrawal(Applicant applicant) {
+        // Get the application associated with the applicant
+        BTOApplication application = applicant.getApplications();
+        // Update the application status and set withdrawal request flag
+        application.setStatus("Pending Withdrawal");
+        application.setRequestedWithdrawal(true);
+
+        // Save the updated application
+        BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
+        btoApplicationService.saveBTOApplication(application);
+
+        // Provide feedback to the user
+        System.out.println("\nApplication withdrawn successfully!");
+        System.out.println("---------------------------------------------");
+        System.out.printf("%-20s %-20s\n", "Project Name", "Status");
+        System.out.printf("%-20s %-20s\n", application.getProjectName(), application.getStatus());
+    }
     
-        if (application != null) {
-            application.setStatus("Pending Withdrawal");  // Update status to pending withdrawal
-            application.setRequestedWithdrawal(true);
-            dataHandler.saveBTOApplication(application); 
-            System.out.println("\nApplication withdrawn successfully!");
-            System.out.println("---------------------------------------------");
-            System.out.printf("%-20s %-20s\n", "Project Name", "Status");
-            System.out.printf("%-20s %-20s\n", application.getProjectName(), application.getStatus());
-        } else {
-            System.out.println("No application found for project: " + projectName);
+
+    
+    
+    @Override
+    public void submitEnquiry(Applicant applicant, String enquiryText, String projectName) {
+        Database db = new Database();
+        BTOProject project = null;
+        for (BTOProject p : db.btoProjectList) {
+            if (p.getProjectName().equalsIgnoreCase(projectName.trim())) {
+                project = p;
+                break;
+            }
         }
-    }
-    
-    
-    @Override
-    public void submitEnquiry(Applicant applicant, String enquiryText) {
-        Enquiry enquiry = new Enquiry(applicant.getUserId(), enquiryText);
+        if (project == null){
+            System.out.println("Project not found: " + projectName);
+            return;
+        }
+        Enquiry enquiry = new Enquiry(applicant.getUserId(), enquiryText, projectName);
         enquiry.setEnquiryDate(new java.sql.Date(System.currentTimeMillis()));
         enquiry.setReply(""); // No reply yet
         enquiry.setReplied(false);
         applicant.addEnquiry(enquiry);
-        Database db = new Database();
-        EnquiryServiceImpl enquiryService = new EnquiryServiceImpl(db); 
-        enquiryService.saveEnquiry(enquiry); // Save the enquiry to the database
+        EnquiryServiceImpl enquiryService = new EnquiryServiceImpl(db);
+        enquiryService.saveEnquiry(enquiry);
         System.out.println("\nEnquiry submitted successfully!");
         System.out.println("---------------------------------------------");
         System.out.println(enquiry.toString());

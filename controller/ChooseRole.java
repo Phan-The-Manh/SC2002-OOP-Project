@@ -40,9 +40,13 @@ public class ChooseRole {
                     break;
 
                 case 2:
-                    // System.out.println("You selected: Officer");
-                    // HDBOfficerController officerController = new HDBOfficerController();
-                    // loginSuccessful = officerController.login();
+                    System.out.println("You selected: Officer");
+                    HDBOfficerController officerController = new HDBOfficerController();
+                    loginSuccessful = officerController.login();
+                    if (loginSuccessful){
+                        OfficerAction officerAction = new OfficerAction();
+                        officerAction.officerAction();
+                    }
                     break;
 
                 case 3:

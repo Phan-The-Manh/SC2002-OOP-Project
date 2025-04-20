@@ -3,9 +3,9 @@ package controller;
 import java.util.Scanner;
 
 public class ApplicantAction {
+    Scanner scanner = new Scanner(System.in);
     public void applicantAction() {
         ApplicantController applicantController = new ApplicantController();
-        Scanner scanner = new Scanner(System.in);
         boolean continueActions = true;
 
         while (continueActions) {

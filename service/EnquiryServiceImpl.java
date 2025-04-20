@@ -8,121 +8,90 @@ import java.util.List;
 import model.Enquiry;
 
 public class EnquiryServiceImpl implements EnquiryService {
-    private Database db;
+    private final Database db;
+    private static final String CSV_FILE_PATH = "src/data/EnquiryList.csv";
 
     public EnquiryServiceImpl(Database db) {
         this.db = db;
     }
 
-    // Method to retrieve all enquiries
     @Override
     public List<Enquiry> getAllEnquiries() {
         return db.enquiryList;
     }
 
-    // Method to save a new enquiry
     @Override
     public void saveEnquiry(Enquiry updatedEnquiry) {
         boolean updated = false;
+
         for (int i = 0; i < db.enquiryList.size(); i++) {
-            Enquiry existingEnquiry = db.enquiryList.get(i);
-            if (existingEnquiry.getApplicantName().equals(updatedEnquiry.getApplicantName()) &&
-                existingEnquiry.getEnquiryText().equals(updatedEnquiry.getEnquiryText())) {
-                db.enquiryList.set(i, updatedEnquiry); // Replace with updated
+            Enquiry existing = db.enquiryList.get(i);
+            if (existing.getApplicantName().equals(updatedEnquiry.getApplicantName()) &&
+                existing.getEnquiryText().equals(updatedEnquiry.getEnquiryText())) {
+                db.enquiryList.set(i, updatedEnquiry);
                 updated = true;
                 break;
             }
         }
 
-        // If not found (new), add to list
         if (!updated) {
             db.enquiryList.add(updatedEnquiry);
         }
 
-        // Rewrite entire CSV file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/data/EnquiryList.csv"))) {
-            writer.write("Applicant Name, Enquiry Text, Reply Content, Enquiry Date, Is Replied\n");
-
-            for (Enquiry enquiry : db.enquiryList) {
-                String dateString = enquiry.getEnquiryDate().toString(); // yyyy-MM-dd
-                writer.write(
-                        enquiry.getApplicantName() + "," +
-                        enquiry.getEnquiryText() + "," +
-                        enquiry.getReply() + "," +
-                        dateString + "," +
-                        enquiry.isReplied() + "\n"
-                );
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        saveToCsv();
     }
 
-    // Method to edit an enquiry
     @Override
-    public void editEnquiry(Enquiry updatedEnquiry, String newText) {
-        boolean updated = false;
-        for (int i = 0; i < db.enquiryList.size(); i++) {
-            Enquiry existingEnquiry = db.enquiryList.get(i);
-            if (existingEnquiry.getApplicantName().equals(updatedEnquiry.getApplicantName()) &&
-                existingEnquiry.getEnquiryText().equals(updatedEnquiry.getEnquiryText())) {
-                updatedEnquiry.setEnquiryText(newText); // Update the text
-                db.enquiryList.set(i, updatedEnquiry); // Replace with updated
-                updated = true;
+    public void editEnquiry(Enquiry enquiryToEdit, String newText) {
+        for (Enquiry enquiry : db.enquiryList) {
+            if (enquiry.getApplicantName().equals(enquiryToEdit.getApplicantName()) &&
+                enquiry.getEnquiryText().equals(enquiryToEdit.getEnquiryText())) {
+                enquiry.setEnquiryText(newText);
                 break;
             }
         }
-        // If not found (new), add to list
-        if (!updated) {
-            db.enquiryList.add(updatedEnquiry);
-        }
 
-        // Rewrite entire CSV file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/data/EnquiryList.csv"))) {
-            writer.write("Applicant Name, Enquiry Text, Reply Content, Enquiry Date, Is Replied\n");
-
-            for (Enquiry enquiry : db.enquiryList) {
-                String dateString = enquiry.getEnquiryDate().toString(); // yyyy-MM-dd
-                writer.write(
-                        enquiry.getApplicantName() + "," +
-                        enquiry.getEnquiryText() + "," +
-                        enquiry.getReply() + "," +
-                        dateString + "," +
-                        enquiry.isReplied() + "\n"
-                );
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        saveToCsv();
     }
 
-    // Method to delete an enquiry
     @Override
     public void deleteEnquiry(Enquiry enquiryToDelete) {
-        for (int i = 0; i < db.enquiryList.size(); i++) {
-            Enquiry existingEnquiry = db.enquiryList.get(i);
-            if (existingEnquiry.getApplicantName().equals(enquiryToDelete.getApplicantName()) &&
-                existingEnquiry.getEnquiryText().equals(enquiryToDelete.getEnquiryText())) {
-                db.enquiryList.remove(i); // Remove the enquiry
-                break;
-            }
-        }
-        // Call method to save the updated list back to the CSV file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/data/EnquiryList.csv"))) {
-            writer.write("Applicant Name, Enquiry Text, Reply Content, Enquiry Date, Is Replied\n");
+        db.enquiryList.removeIf(enquiry ->
+            enquiry.getApplicantName().equals(enquiryToDelete.getApplicantName()) &&
+            enquiry.getEnquiryText().equals(enquiryToDelete.getEnquiryText())
+        );
+
+        saveToCsv();
+    }
+
+    // Private helper to write CSV with escaped values
+    private void saveToCsv() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(CSV_FILE_PATH))) {
+            writer.write("Applicant Name,Enquiry Text,Reply Content,Enquiry Date,Is Replied,Project Name\n");
 
             for (Enquiry enquiry : db.enquiryList) {
-                String dateString = enquiry.getEnquiryDate().toString(); // yyyy-MM-dd
-                writer.write(
-                        enquiry.getApplicantName() + "," +
-                        enquiry.getEnquiryText() + "," +
-                        enquiry.getReply() + "," +
-                        dateString + "," +
-                        enquiry.isReplied() + "\n"
+                String line = String.join(",",
+                    escapeCsv(enquiry.getApplicantName()),
+                    escapeCsv(enquiry.getEnquiryText()),
+                    escapeCsv(enquiry.getReply()),
+                    enquiry.getEnquiryDate().toString(),
+                    Boolean.toString(enquiry.isReplied()),
+                    escapeCsv(enquiry.getProjectName())
                 );
+                writer.write(line + "\n");
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error writing EnquiryList.csv: " + e.getMessage());
         }
+    }
+
+    // Escape commas, quotes, and newlines in CSV
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            value = value.replace("\"", "\"\"");
+            return "\"" + value + "\"";
+        }
+        return value;
     }
 }

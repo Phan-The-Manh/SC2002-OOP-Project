@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Applicant extends User {
-    private List<Enquiry> enquiries = new ArrayList<>();
-    private List<BTOApplication> applications = new ArrayList<>();
+    private List<Enquiry> enquiries = new ArrayList<>(); 
+    private BTOApplication application = null;
 
     public Applicant(String name, String userId, int age, String maritalStatus, String password) {
         super(name, userId, age, maritalStatus, password);
@@ -53,16 +53,12 @@ public class Applicant extends User {
     }
 
     // === Applications ===
-    public List<BTOApplication> getApplications() {
-        return applications;
+    public BTOApplication getApplications() {
+        return application;
     }
 
-    public void setApplications(List<BTOApplication> applications) {
-        this.applications = applications;
-    }
-
-    public void addApplication(BTOApplication application) {
-        this.applications.add(application);
+    public void setApplications(BTOApplication application) {
+        this.application = application;
     }
 
     // === Enquiries ===

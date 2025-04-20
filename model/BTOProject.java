@@ -24,6 +24,8 @@ public class BTOProject {
     private boolean visibility = true;
     private List<BTOApplication> applications = new ArrayList<>();
 
+    private List<Enquiry> enquiries = new ArrayList<>();
+
     // Constructor
     public BTOProject(String projectName, String neighborhood,
                       int flatType1Units, double flatType1Price,
@@ -185,5 +187,9 @@ public class BTOProject {
 
     public void setApplications(List<BTOApplication> applications) {
         this.applications = applications;
+    }
+
+    public List<Enquiry> getEnquiries(){
+        return enquiries;
     }
 }

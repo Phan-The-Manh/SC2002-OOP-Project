@@ -47,7 +47,8 @@ public class ApplicantController {
     
 
     public void viewAvailableProjects() {
-        applicantService.viewAvailableProjects(); 
+        Applicant applicant = CurrentUser.<Applicant>getInstance().getUser();
+        applicantService.viewAvailableProjects(applicant); 
     }
 
     public void applyForProject() {
@@ -60,6 +61,11 @@ public class ApplicantController {
             return;
         }
     
+        if (applicant.getApplications() != null){
+            System.out.println("The applicant has already applied for a project.");
+            return;
+        }
+        
         // Prompt for project name (ensure it's not blank)
         String projectName;
         do {
@@ -69,10 +75,25 @@ public class ApplicantController {
                 System.out.println("Project name cannot be empty. Please try again.");
             }
         } while (projectName.isEmpty());
+        
+        // Prompt for roomType
+        int roomType;
+        while (true) {
+            System.out.print("Enter your room type(1. 2-room | 2. 3-room): ");
+            if (scanner.hasNextInt()) {
+                roomType = scanner.nextInt();
+                scanner.nextLine(); // Consume the newline character after reading int
+                break; // valid input, exit loop
+            } else {
+                System.out.println("Invalid input. Please enter a valid choice.");
+                scanner.next(); // consume the invalid input
+            }
+        }
     
         // Delegate to service
-        applicantService.applyForProject(applicant, projectName);
+        applicantService.applyForProject(applicant, projectName, roomType);
     }
+    
 
     void viewApplicationStatus() {
         // Get current user
@@ -95,19 +116,12 @@ public class ApplicantController {
             System.out.println("No applicant is currently logged in.");
             return;
         }
-    
-        // Prompt for project name (ensure it's not blank)
-        String projectName;
-        do {
-            System.out.print("Enter the project name you want to withdraw from: ");
-            projectName = scanner.nextLine().trim();
-            if (projectName.isEmpty()) {
-                System.out.println("Project name cannot be empty. Please try again.");
-            }
-        } while (projectName.isEmpty());
-    
+        if (applicant.getApplications() == null){
+            System.out.println("The applicant has not applied for any project.");
+            return;
+        }
         // Delegate to service
-        applicantService.requestWithdrawal(applicant, projectName);
+        applicantService.requestWithdrawal(applicant);
     }
 
     void submitEnquiry() {
@@ -119,19 +133,29 @@ public class ApplicantController {
             return;
         }
     
-        // Prompt for enquiry text (ensure it's not blank)
-        String enquiryText;
+        String projectName;
         do {
-            System.out.print("Enter your enquiry: ");
-            enquiryText = scanner.nextLine().trim();
-            if (enquiryText.isEmpty()) {
-                System.out.println("Enquiry cannot be empty. Please try again.");
+            System.out.print("Enter your project name: ");
+            projectName = scanner.nextLine().trim();
+            if (projectName.isEmpty()) {
+                System.out.println("Project name cannot be empty. Please try again.");
             }
-        } while (enquiryText.isEmpty());
+        } while (projectName.isEmpty());
+
+                // Prompt for enquiry text (ensure it's not blank)
+                String enquiryText;
+                do {
+                    System.out.print("Enter your enquiry: ");
+                    enquiryText = scanner.nextLine().trim();
+                    if (enquiryText.isEmpty()) {
+                        System.out.println("Enquiry cannot be empty. Please try again.");
+                    }
+                } while (enquiryText.isEmpty());
     
         // Delegate to service
-        applicantService.submitEnquiry(applicant, enquiryText);
+        applicantService.submitEnquiry(applicant, enquiryText, projectName);
     }
+
     void editEnquiry(){
         // Get current user
         Applicant applicant = CurrentUser.<Applicant>getInstance().getUser();
