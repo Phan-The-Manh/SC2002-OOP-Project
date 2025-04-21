@@ -9,7 +9,7 @@ public interface HDBManagerService {
     void editProject(String projectName, BTOProject project);
     void deleteProject(String projectName);
     void toggleProjectVisibility(BTOProject project);
-    void manageHDBOfficerRegistration(HDBManager manager, BTOProject project, HDBOfficer officer, boolean approve);
+    void manageHDBOfficerRegistration(ProjectRegistration projectRegistration, boolean approve);
     void manageApplicantApplication(BTOApplication application, boolean approve);
     void manageWithdrawalRequest(BTOApplication application, boolean approve);
     void generateReport(HDBManager manager, BTOProject project, String filterCriteria);

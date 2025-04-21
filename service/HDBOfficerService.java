@@ -4,7 +4,7 @@ import model.*;
 
 public interface HDBOfficerService extends ApplicantService {
     void registerForProject(HDBOfficer officer, BTOProject project);
-    void viewRegistrationStatus(HDBOfficer officer, BTOProject project);
+    void viewRegistrationStatus(HDBOfficer officer);
     void viewApplicationByStatus(HDBOfficer officer, String status);
     void approveFlatBooking(Applicant applicant, BTOApplication application);
     void viewProjectEnquiry(HDBOfficer officer);

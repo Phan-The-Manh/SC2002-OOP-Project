@@ -8,9 +8,9 @@ import service.*;
 public class HDBOfficerController {
 
     private final HDBOfficerService hdbOfficerService;
-    
+    private Database db = new Database();
     public HDBOfficerController() {
-        this.hdbOfficerService = new HDBOfficerServiceImpl(); 
+        this.hdbOfficerService = new HDBOfficerServiceImpl(db); 
     }
 
     Scanner scanner = new Scanner(System.in);
@@ -232,13 +232,62 @@ public class HDBOfficerController {
         hdbOfficerService.viewApplicationByStatus(officer, status);
     }
 
-    void registerForProject(){
-        // Add code
+    void registerForProject() {
+        HDBOfficer officer = (HDBOfficer) CurrentUser.<Applicant>getInstance().getUser();
+        
+        if (officer == null) {
+            System.out.println("No officer is currently logged in.");
+            return;
+        }
+
+        // Check if officer has already registered for a project
+        for(ProjectRegistration registration: db.projectRegistrationList){
+            if (registration.getOfficer().getNRIC().equalsIgnoreCase(officer.getNRIC())){
+                System.out.println("You have already registered for a project. You can only register once.");
+                return;
+            }
+        }
+        
+        // Prompt for the project name
+        String projectName;
+        do {
+            System.out.print("Enter the project name you want to register for: ");
+            projectName = scanner.nextLine().trim();
+            if (projectName.isEmpty()) {
+                System.out.println("Project name cannot be empty. Please try again.");
+            }
+        } while (projectName.isEmpty());
+    
+        // Search for the project by projectName
+        BTOProject projectToRegister = null;
+        for (BTOProject project : db.btoProjectList) {
+            if (project.getProjectName().equalsIgnoreCase(projectName)) {
+                projectToRegister = project;
+                break;
+            }
+        }
+    
+        if (projectToRegister == null) {
+            System.out.println("Project not found. Please check the project name and try again.");
+            return;
+        }
+        hdbOfficerService.registerForProject(officer, projectToRegister);
     }
     
-    void viewRegistrationStatus(){
-        // Add code
+    
+    
+    void viewRegistrationStatus() {
+        HDBOfficer officer = (HDBOfficer) CurrentUser.<Applicant>getInstance().getUser();
+        
+        if (officer == null) {
+            System.out.println("No officer is currently logged in.");
+            return;
+        }
+    
+        // Delegate to service to view the registration status for the officer
+        hdbOfficerService.viewRegistrationStatus(officer);
     }
+    
 
     void approveFlatBooking(){
         // Add code

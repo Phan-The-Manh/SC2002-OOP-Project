@@ -4,9 +4,12 @@ import java.util.List;
 import model.*;
 
 public class HDBOfficerServiceImpl extends ApplicantServiceImpl implements HDBOfficerService {
+    private final Database db;
+    public HDBOfficerServiceImpl(Database db) {
+        this.db = db;
+    }
     @Override
     public Applicant checkLogin(String userId, String password) {
-        Database db = new Database();
         boolean userFound = false;  // Flag to check if the user exists
         boolean passwordCorrect = false;  // Flag to check if the password is correct
     
@@ -43,7 +46,6 @@ public class HDBOfficerServiceImpl extends ApplicantServiceImpl implements HDBOf
     @Override
     public void applyForProject(Applicant officer, String projectName, int roomType) {
         officer = (HDBOfficer)officer;
-        Database db = new Database();
         List<BTOProject> projectList = db.btoProjectList;
     
         // Find project by name
@@ -86,22 +88,45 @@ public class HDBOfficerServiceImpl extends ApplicantServiceImpl implements HDBOf
 
     @Override
     public void registerForProject(HDBOfficer officer, BTOProject project) {
+        // 1. Check if the officer is already registered for another project
         if (officer.isRegisteredForProject()) {
             System.out.println("Officer is already registered for another project.");
-        } 
-        else if(project.getApplications().stream().anyMatch(e -> e.getApplicant().getUserId().equals(officer.getUserId()))){
-            System.out.println("Officer has already applied for this project");
+        }
+        // 2. Check if the officer has already applied for this project
+        else if (project.getApplications().stream().anyMatch(e -> e.getApplicant().getUserId().equals(officer.getUserId()))) {
+            System.out.println("Officer has already applied for this project.");
         }
         else {
-            officer.setProjectAssigned(project);
-            //Add method
+            ProjectRegistration registration = new ProjectRegistration(officer, project);
+            db.projectRegistrationList.add(registration);
+            officer.setRegisteredForProject(true);
+            ProjectRegistrationServiceImpl registrationService = new ProjectRegistrationServiceImpl(db);
+            registrationService.saveProjectRegistration(registration);
+            System.out.println("Officer has been successfully registered for the project: " + project.getProjectName());
         }
     }
 
+
     @Override
-    public void viewRegistrationStatus(HDBOfficer officer, BTOProject project){
-        //Add method
+    public void viewRegistrationStatus(HDBOfficer officer) {
+        boolean isRegistered = false;
+
+        // Loop through all registrations and check if the officer's NRIC matches
+        for (ProjectRegistration registration : db.projectRegistrationList) {
+            if (registration.getOfficer().getUserId().equals(officer.getUserId())) {
+                System.out.println("Officer " + officer.getName() + " is registered for the project: " + registration.getProject().getProjectName());
+                System.out.println("Registration Status: " + registration.getStatus());
+                isRegistered = true; // Officer is registered for at least one project
+            }
+        }
+
+        // If the officer is not registered for any project
+        if (!isRegistered) {
+            System.out.println("You is not registered for any project.");
+        }
     }
+
+    
 
     @Override 
     public void viewApplicationByStatus(HDBOfficer officer, String status){

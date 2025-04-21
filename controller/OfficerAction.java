@@ -116,10 +116,10 @@ public class OfficerAction {
                                 scanner.nextLine(); // Consume newline
                                 switch (applicantChoice) {
                                     case 1:
-                                        //officerController.registerForProject();();
+                                        officerController.registerForProject();
                                         break;
                                     case 2:
-                                        //officerController.viewRegistrationStatus();
+                                        officerController.viewRegistrationStatus();
                                         break;
                                     case 3:
                                         officerController.viewApplicationByStatus();

@@ -16,6 +16,7 @@ public class Database {
     public List<Enquiry> enquiryList = new ArrayList<>();
     public List<FlatBooking> flatBookingList = new ArrayList<>();
     public List<BTOProject> btoVisibleProjectList = new ArrayList<>();
+    public List<ProjectRegistration> projectRegistrationList = new ArrayList<>();
     public Database() {
         loadApplicants("src/data/ApplicantList.csv");
         loadManagers("src/data/ManagerList.csv");
@@ -24,6 +25,7 @@ public class Database {
         loadBTOApplicationList("src/data/BTOApplicationList.csv");
         loadEnquiries("src/data/EnquiryList.csv");
         loadFlatBookings("src/data/FlatBookingList.csv");
+        loadProjectRegistrations("src/data/ProjectRegistrationList.csv");
     }
 
     private void loadApplicants(String path) {
@@ -152,10 +154,13 @@ public class Database {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy");
     
             while ((line = reader.readLine()) != null) {
+                // Split the line based on comma, ensuring we account for quotes in values (like officer names with commas).
                 String[] parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
     
+                // Make sure there are enough fields to process
                 if (parts.length >= 14) {
                     try {
+                        // Extract the basic information from the CSV columns
                         String projectName = parts[0].trim();
                         String neighborhood = parts[1].trim();
                         int units1 = Integer.parseInt(parts[3].trim());
@@ -163,26 +168,26 @@ public class Database {
                         int units2 = Integer.parseInt(parts[6].trim());
                         double price2 = Double.parseDouble(parts[7].trim());
     
+                        // Parse application dates
                         LocalDate openDate = LocalDate.parse(parts[8].trim(), formatter);
                         LocalDate closeDate = LocalDate.parse(parts[9].trim(), formatter);
     
+                        // Manager and officer slot
                         String managerName = parts[10].trim();
                         int officerSlot = Integer.parseInt(parts[11].trim());
     
-                        // Parse visibility
-                        boolean visible = Boolean.parseBoolean(parts[12].trim());
-    
-                        // Parse officers with semicolon separator
+                        // Parse the officers, which are now separated by a semicolon
                         List<HDBOfficer> assignedOfficers = new ArrayList<>();
-                        String officerField = parts[13].trim().replace("\"", "");
+                        String officerField = parts[12].trim().replace("\"", ""); // Remove extra quotes if they exist
                         if (!officerField.isEmpty()) {
+                            // Split by semicolon for multiple officers
                             String[] officerNames = officerField.split(";");
-                            for (String name : officerNames) {
-                                String trimmedName = name.trim();
+                            for (String officerName : officerNames) {
+                                String trimmedName = officerName.trim();
                                 HDBOfficer officer = hdbOfficerList.stream()
-                                    .filter(o -> o.getName().trim().equalsIgnoreCase(trimmedName))
-                                    .findFirst()
-                                    .orElse(null);
+                                        .filter(o -> o.getName().trim().equalsIgnoreCase(trimmedName))
+                                        .findFirst()
+                                        .orElse(null);
     
                                 if (officer != null) {
                                     assignedOfficers.add(officer);
@@ -190,11 +195,16 @@ public class Database {
                             }
                         }
     
+                        // Parse visibility (this field is now after the officer list)
+                        boolean visible = Boolean.parseBoolean(parts[13].trim());
+    
+                        // Find the manager from the list
                         HDBManager manager = hdbManagerList.stream()
                                 .filter(m -> m.getName().equalsIgnoreCase(managerName))
                                 .findFirst()
                                 .orElse(null);
     
+                        // If manager exists, create and add the project
                         if (manager != null) {
                             BTOProject project = new BTOProject(
                                     projectName,
@@ -209,10 +219,11 @@ public class Database {
                                     officerSlot,
                                     assignedOfficers
                             );
-                            project.setVisibility(visible); // ← Make sure your BTOProject has this method
+                            project.setVisibility(visible); // Set the visibility after the officer list
                             btoProjectList.add(project);
+                        } else {
+                            System.err.println("Manager not found for project: " + projectName);
                         }
-    
                     } catch (Exception e) {
                         System.err.println("Error processing line: " + line);
                         e.printStackTrace();
@@ -224,6 +235,7 @@ public class Database {
             e.printStackTrace();
         }
     }
+    
 
     public void getBTOProjectList() {
         System.out.println("\n===== BTO Projects =====");
@@ -386,7 +398,43 @@ public class Database {
         }
     }
 
+    private void loadProjectRegistrations(String path) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(path, StandardCharsets.UTF_8))) {
+            reader.readLine(); // Skip header
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",", -1); // handle empty fields
+                if (parts.length >= 3) {
+                    String officerId = parts[0].trim();
+                    String projectName = parts[1].trim();
+                    String status = parts[2].trim();
+    
+                    // Find the corresponding HDBOfficer and BTOProject
+                    HDBOfficer officer = hdbOfficerList.stream()
+                            .filter(o -> o.getUserId().equals(officerId))
+                            .findFirst()
+                            .orElse(null);
+    
+                    BTOProject project = btoProjectList.stream()
+                            .filter(p -> p.getProjectName().equals(projectName))
+                            .findFirst()
+                            .orElse(null);
+    
+                    // If both officer and project are found, create the ProjectRegistration
+                    if (officer != null && project != null) {
+                        ProjectRegistration pr = new ProjectRegistration(officer, project);
+                        pr.setStatus(status);
+                        projectRegistrationList.add(pr);
 
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to load project registrations: " + e.getMessage());
+        }
+    }
+    
+    
 
     
 }

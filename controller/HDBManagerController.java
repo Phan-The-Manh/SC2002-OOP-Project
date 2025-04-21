@@ -1,6 +1,7 @@
 package controller;
 
 import data.Database;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -441,8 +442,6 @@ public class HDBManagerController {
             System.out.println((i + 1) + ". " + app.toString()); // Customize output as needed
         }
     
-        Scanner scanner = new Scanner(System.in);
-    
         int choice = -1;
         while (choice < 1 || choice > pendingApplications.size()) {
             System.out.print("Choose an application to manage (1-" + pendingApplications.size() + "): ");
@@ -520,5 +519,73 @@ public class HDBManagerController {
     public void viewEnquiries() {
         hdbManagerService.viewEnquiries();
     }
+
+    public void viewOfficerRegistrations() {
+        Database db = new Database();
+        List<ProjectRegistration> officerRegistrations = db.projectRegistrationList;
+
+        if (officerRegistrations.isEmpty()) {
+            System.out.println("No officer registrations found.");
+            return;
+        }
+
+        System.out.println("=== Officer Registrations ===");
+        for (ProjectRegistration registration : officerRegistrations) {
+            System.out.println(registration.toString()); // Customize output as needed
+        }
+    }
+
+    public void manageHDBOfficerRegistration() {
+        Database db = new Database();
+        List<ProjectRegistration> pendingRegistrations = new ArrayList<>();
+
+        // Filter pending registrations
+        for (ProjectRegistration registration : db.projectRegistrationList) {
+            if ("Pending".equalsIgnoreCase(registration.getStatus())) {
+                pendingRegistrations.add(registration);
+            }
+        }
+
+        if (pendingRegistrations.isEmpty()) {
+            System.out.println("No pending officer registrations found.");
+            return;
+        }
+
+        System.out.println("Pending Officer Registrations:");
+        for (int i = 0; i < pendingRegistrations.size(); i++) {
+            ProjectRegistration pr = pendingRegistrations.get(i);
+            System.out.printf("%d. Officer: %s (%s)  Project: %s\n",
+                    i + 1,
+                    pr.getOfficer().getName(),
+                    pr.getOfficer().getNRIC(),
+                    pr.getProject().getProjectName());
+        }
+
+        System.out.print("Enter the number of the registration to manage (or 0 to cancel): ");
+        int choice = Integer.parseInt(scanner.nextLine());
+
+        if (choice < 1 || choice > pendingRegistrations.size()) {
+            System.out.println("Action cancelled or invalid selection.");
+            return;
+        }
+
+        HDBManager manager = CurrentUser.<HDBManager>getInstance().getUser(); // Assuming this is how you get the current manager
+        for (BTOProject project : db.btoProjectList) {
+            if (!project.getManager().getName().equals(manager.getName())) {
+                System.out.println("You cannot manage this project.");
+                return;
+            }
+        }
+        ProjectRegistration selected = pendingRegistrations.get(choice - 1);
+
+        // Ask for approval or rejection
+        System.out.print("Approve this officer for the project? (yes/no): ");
+        String decision = scanner.nextLine().trim().toLowerCase();
+
+        boolean approve = decision.equals("yes");
+        // Call service method to manage registration
+        hdbManagerService.manageHDBOfficerRegistration(selected, approve);
+    }
+
 
 }

@@ -11,9 +11,6 @@ public class HDBManager extends User {
         super(name, userId, age, maritalStatus, password);
     }
 
-    // === Inherited from User ===
-
-    // Getter and Setter for name
     @Override
     public String getName() {
         return super.getName();

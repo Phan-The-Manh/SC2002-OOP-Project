@@ -14,7 +14,7 @@ public class ManagerAction {
             System.out.println("2. Manage Project (Create, Edit, Delete)");
             System.out.println("3. Toggle Project Visibility");
             System.out.println("4. Filter Created Projects");
-            System.out.println("5. View Pending HDB Officer Registrations");
+            System.out.println("5. View HDB Officer Registration");
             System.out.println("6. Approve/Reject HDB Officer Registration");
             System.out.println("7. Approve/Reject Applicant BTO Application");
             System.out.println("8. Approve/Reject Applicant Withdrawal Request");
@@ -34,7 +34,6 @@ public class ManagerAction {
                         managerController.viewAvailableProjects();
                         break;
                     case 2:
-                        // Action 2: Manage Project Submenu
                         boolean managingProjects = true;
                         while (managingProjects) {
                             System.out.println("\n--- Manage Project ---");
@@ -74,12 +73,12 @@ public class ManagerAction {
                     // case 4:
                     //     managerController.filterCreatedProjects();
                     //     break;
-                    // case 5:
-                    //     managerController.viewPendingOfficerRegistrations();
-                    //     break;
-                    // case 6:
-                    //     managerController.approveRejectOfficerRegistration();
-                    //     break;
+                    case 5:
+                        managerController.viewOfficerRegistrations();
+                        break;
+                    case 6:
+                        managerController.manageHDBOfficerRegistration();
+                        break;
                     case 7:
                         managerController.manageApplicantApplication();
                         break;
@@ -89,13 +88,13 @@ public class ManagerAction {
                     // case 9:
                     //     managerController.generateReport();
                     //     break;
-                    case 10:
+                    case 9:
                         managerController.viewEnquiries();
                         break;
-                    // case 11:
+                    // case 10:
                     //     managerController.replyToEnquiries();
                     //     break;
-                    // case 12:
+                    // case 11:
                     //     System.out.println("Logging out...");
                     //     continueActions = false;
                     //     break;

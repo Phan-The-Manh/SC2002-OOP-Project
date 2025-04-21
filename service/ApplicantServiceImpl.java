@@ -98,7 +98,7 @@ public class ApplicantServiceImpl implements ApplicantService {
     public void viewApplicationStatus(Applicant applicant) {
         // Check if the applicant has any applications
         if (applicant.getApplications() == null) {
-            System.out.println("No applications found for this applicant.");
+            System.out.println("No applications found for you.");
         } else {
             // Print the header of the table
             System.out.println(String.format("%-20s %-20s", "Project Name", "Application Status"));

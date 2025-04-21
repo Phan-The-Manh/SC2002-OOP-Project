@@ -1,12 +1,10 @@
 package service;
 
-import model.*;
 import data.Database;
-
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.xml.crypto.Data;
+import model.*;
 
 public class HDBManagerServiceImpl implements HDBManagerService {
     private final Database db = new Database();
@@ -111,15 +109,36 @@ public class HDBManagerServiceImpl implements HDBManagerService {
     }
 
     @Override
-    public void manageHDBOfficerRegistration(HDBManager manager, BTOProject project, HDBOfficer officer, boolean approve) {
+    public void manageHDBOfficerRegistration(ProjectRegistration projectRegistration, boolean approve) {
+        BTOProject project = projectRegistration.getProject();
+        HDBOfficer officer = projectRegistration.getOfficer();
+    
         if (approve) {
-            if (project.getOfficerSlot() > project.getOfficerList().size()) {
-                project.getOfficerList().add(officer);
+            // Check if slots are available
+            if (project.getAvailableSlots() <= 0) {
+                System.out.println("No available slots for officers in project: " + project.getProjectName());
+                return;
             }
+    
+            // Add officer to project
+            officer.setProjectAssigned(project);
+            officer.setIsRegisteredForProject(true);
+            project.getOfficerList().add(officer);
+            project.setAvailableSlots(project.getAvailableSlots() - 1);
+            btoProjectService.saveProject(project);
+    
+            // Save the registration
+            projectRegistration.setStatus("Approved");
+            ProjectRegistrationServiceImpl projectRegistrationService = new ProjectRegistrationServiceImpl(db);
+            projectRegistrationService.saveProjectRegistration(projectRegistration);
+    
+            System.out.println("Officer " + officer.getName() + " has been successfully registered for project: " + project.getProjectName());
         } else {
-            project.getOfficerList().remove(officer);
+            System.out.println("Officer " + officer.getName() + " has been rejected from project: " + project.getProjectName());
         }
     }
+    
+    
 
     @Override
     public void manageApplicantApplication(BTOApplication application, boolean approve) {
