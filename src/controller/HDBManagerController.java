@@ -1,6 +1,8 @@
 package controller;
 
 import data.Database;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -130,26 +132,26 @@ public class HDBManagerController {
             }
         }
 
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
-        sdf.setLenient(false); // strict parsing
+        // Use LocalDate for date handling
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        java.util.Date openDate = null;
+        LocalDate openDate = null;
         while (true) {
             System.out.print("Enter application open date (yyyy-MM-dd): ");
             try {
-                openDate = sdf.parse(scanner.nextLine());
+                openDate = LocalDate.parse(scanner.nextLine(), formatter);
                 break;
             } catch (Exception e) {
                 System.out.println("Invalid date format. Try again.");
             }
         }
 
-        java.util.Date closeDate = null;
+        LocalDate closeDate = null;
         while (true) {
             System.out.print("Enter application close date (yyyy-MM-dd): ");
             try {
-                closeDate = sdf.parse(scanner.nextLine());
-                if (!closeDate.before(openDate)) break;
+                closeDate = LocalDate.parse(scanner.nextLine(), formatter);
+                if (!closeDate.isBefore(openDate)) break; // Ensure close date is after open date
                 System.out.println("Close date must be after open date.");
             } catch (Exception e) {
                 System.out.println("Invalid date format. Try again.");
@@ -168,7 +170,7 @@ public class HDBManagerController {
             }
         }
 
-        // Create project
+        // Create project with LocalDate for dates
         BTOProject project = new BTOProject(
                 projectName,
                 neighborhood,
@@ -180,8 +182,10 @@ public class HDBManagerController {
                 closeDate,
                 manager,
                 officerSlots,
-                new java.util.ArrayList<>() // empty officer list
+                new ArrayList<>() // empty officer list
         );
+
+        // Assuming hdbManagerService is a service that creates the project in the system
         hdbManagerService.createProject(manager, project); 
     }
 
@@ -200,6 +204,7 @@ public class HDBManagerController {
     void viewAvailableProjects() {
         hdbManagerService.viewAvailableProjects();
     }
+
 
     public void editProject() {
         // Get the manager's current user (assuming they're logged in)
@@ -285,26 +290,26 @@ public class HDBManagerController {
             }
         }
     
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
-        sdf.setLenient(false); // strict parsing
+        // Use LocalDate for date handling
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     
-        java.util.Date openDate = null;
+        LocalDate openDate = null;
         while (true) {
             System.out.print("Enter application open date (yyyy-MM-dd): ");
             try {
-                openDate = sdf.parse(scanner.nextLine());
+                openDate = LocalDate.parse(scanner.nextLine(), formatter);
                 break;
             } catch (Exception e) {
                 System.out.println("Invalid date format. Try again.");
             }
         }
     
-        java.util.Date closeDate = null;
+        LocalDate closeDate = null;
         while (true) {
             System.out.print("Enter application close date (yyyy-MM-dd): ");
             try {
-                closeDate = sdf.parse(scanner.nextLine());
-                if (!closeDate.before(openDate)) break;
+                closeDate = LocalDate.parse(scanner.nextLine(), formatter);
+                if (!closeDate.isBefore(openDate)) break; // Ensure close date is after open date
                 System.out.println("Close date must be after open date.");
             } catch (Exception e) {
                 System.out.println("Invalid date format. Try again.");
@@ -335,12 +340,11 @@ public class HDBManagerController {
                 closeDate,
                 manager,
                 officerSlots,
-                new java.util.ArrayList<>() // empty officer list (can be updated if needed)
+                new ArrayList<>() // empty officer list (can be updated if needed)
         );
     
         hdbManagerService.editProject(projectName, updatedProject); // Call the service to update the project
     }
-    
     
 
     public void deleteProject() {

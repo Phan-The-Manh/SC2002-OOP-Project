@@ -1,12 +1,9 @@
 package service;
 
 import data.Database;
-import java.sql.Date;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,27 +45,30 @@ public class HDBManagerServiceImpl implements HDBManagerService {
         }
         return null;
     }
-
+    
     @Override
     public void viewAvailableProjects() {
         List<BTOProject> projects = db.btoProjectList;
-    
+
         if (projects.isEmpty()) {
             System.out.println("No available projects to display.");
             return;
         }
-    
+
         // Print header with column names
         System.out.println("=== Available BTO Projects ===");
-    
+
         // Loop through the list of projects and print details in a formatted way
         for (BTOProject project : projects) {
             System.out.println("Project Name: " + project.getProjectName());
             System.out.println("Neighborhood: " + project.getNeighborhood());
             System.out.println("2-Room Units: " + project.getFlatType1Units());
             System.out.println("3-Room Units: " + project.getFlatType2Units());
+
+            // Use formatDate helper method to format the LocalDate
             System.out.println("Application Open Date: " + formatDate(project.getApplicationOpenDate()));
             System.out.println("Application Close Date: " + formatDate(project.getApplicationCloseDate()));
+
             System.out.println("Officer Slots: " + project.getAvailableSlots());
             System.out.println("Manager: " + project.getManager().getName());
             System.out.println("Officer List: " + project.getOfficerList().size());
@@ -76,13 +76,12 @@ public class HDBManagerServiceImpl implements HDBManagerService {
             System.out.println("-----------------------------------------------------");
         }
     }
-    
-    
-    // Helper method to format the date in MM/dd/yyyy format
-    private String formatDate(java.util.Date date) {
-        if (date == null) return "N/A";
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-        return sdf.format(date);
+
+    // Helper method to format the LocalDate in MM/dd/yyyy format
+    private String formatDate(LocalDate date) {
+        if (date == null) return "N/A";  // In case the date is null
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+        return date.format(formatter);
     }
     
 
@@ -326,53 +325,61 @@ public class HDBManagerServiceImpl implements HDBManagerService {
     public void filterProject(HDBManager manager) {
         List<BTOProject> projects = db.btoProjectList;
         List<BTOProject> managedProjects = new ArrayList<>();
-
+    
         for (BTOProject project : projects) {
             if (project.getManager().getUserId().equals(manager.getUserId())) {
                 managedProjects.add(project);
             }
         }
-
+    
         LocalDate today = LocalDate.now();
         List<BTOProject> overdueProjects = new ArrayList<>();
         List<BTOProject> inDueProjects = new ArrayList<>();
+    
+        System.out.println("\n===================================================");
+        System.out.println(" Project Filter Summary for Manager: " + manager.getName());
+        System.out.println("Date: " + today);
+        System.out.println("===================================================");
+    
         for (BTOProject project : managedProjects) {
             try {
-                // Convert java.sql.Date to LocalDate using Calendar
-                java.sql.Date sqlCloseDate = (Date) project.getApplicationCloseDate();
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(sqlCloseDate);
-                LocalDate closeDate = calendar.toInstant()
-                                            .atZone(ZoneId.systemDefault())
-                                            .toLocalDate();
-
+                LocalDate closeDate = project.getApplicationCloseDate();
+    
                 if (closeDate.isBefore(today)) {
                     overdueProjects.add(project);
                 } else if (closeDate.isAfter(today)) {
                     inDueProjects.add(project);
                 } else {
-                    // In case the close date is exactly today
-                    System.out.println("Project " + project.getProjectName() + " closes today.");
+                    System.out.println(" Project \"" + project.getProjectName() + "\" closes today!");
                 }
             } catch (Exception e) {
-                System.out.println("Error processing date for project: " + project.getProjectName());
+                System.out.println(" Error processing date for project: " + project.getProjectName());
                 e.printStackTrace();
             }
         }
-
-        // Print In Due Projects
-        System.out.println("\nProjects not over application period:");
-        System.out.println("---------------------------------------------");
-        for (BTOProject project : inDueProjects) {
-            System.out.println(project);
+    
+        // Print In-Due Projects
+        System.out.println("\n--- Projects Currently Open for Application ---");
+        if (inDueProjects.isEmpty()) {
+            System.out.println("No active projects at the moment.");
+        } else {
+            for (BTOProject project : inDueProjects) {
+                System.out.println(" " + project);
+            }
         }
-
+    
         // Print Overdue Projects
-        System.out.println("\nProjects Overdue:");
-        System.out.println("---------------------------------------------");
-        for (BTOProject project : overdueProjects) {
-            System.out.println(project);
+        System.out.println("\n---  Projects Past Application Deadline ---");
+        if (overdueProjects.isEmpty()) {
+            System.out.println("No overdue projects.");
+        } else {
+            for (BTOProject project : overdueProjects) {
+                System.out.println(" " + project);
+            }
         }
+    
+        System.out.println("===================================================\n");
     }
+    
 
 }

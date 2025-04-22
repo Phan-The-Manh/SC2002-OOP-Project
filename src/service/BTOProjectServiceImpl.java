@@ -5,7 +5,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import model.BTOProject;
 import model.HDBOfficer;
 
@@ -21,14 +21,21 @@ public class BTOProjectServiceImpl implements BTOProjectService {
         File file = new File("src/data/ProjectList.csv");
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, false))) {
+            // Write the header to the CSV file
             writer.write("Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visible\n");
 
+            // Create a DateTimeFormatter for formatting the LocalDate
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
             for (BTOProject project : db.btoProjectList) {
-                String formattedOpenDate = new SimpleDateFormat("MM/dd/yyyy").format(project.getApplicationOpenDate());
-                String formattedCloseDate = new SimpleDateFormat("MM/dd/yyyy").format(project.getApplicationCloseDate());
+                // Format the LocalDate to a string using DateTimeFormatter
+                String formattedOpenDate = project.getApplicationOpenDate().format(formatter);
+                String formattedCloseDate = project.getApplicationCloseDate().format(formatter);
+
                 long flatType1PriceLong = (long) project.getFlatType1Price();
                 long flatType2PriceLong = (long) project.getFlatType2Price();
 
+                // Write project details to the CSV file
                 writer.write(
                     project.getProjectName() + "," +
                     project.getNeighborhood() + "," +
@@ -46,6 +53,7 @@ public class BTOProjectServiceImpl implements BTOProjectService {
             e.printStackTrace();
         }
     }
+
 
     // Method to save a new BTO project
     @Override

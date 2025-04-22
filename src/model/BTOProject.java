@@ -1,7 +1,7 @@
 package model;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class BTOProject {
@@ -14,14 +14,14 @@ public class BTOProject {
     private int flatType2Units;
     private double flatType2Price;
 
-    private Date applicationOpenDate;
-    private Date applicationCloseDate;
+    private LocalDate applicationOpenDate;
+    private LocalDate applicationCloseDate;
 
     private HDBManager manager;
     private int availableSlots;
     private List<HDBOfficer> officerList;
 
-    private boolean visibility = true;
+    private boolean visibility = false;
     private List<BTOApplication> applications = new ArrayList<>();
 
     private List<Enquiry> enquiries = new ArrayList<>();
@@ -30,7 +30,7 @@ public class BTOProject {
     public BTOProject(String projectName, String neighborhood,
                       int flatType1Units, double flatType1Price,
                       int flatType2Units, double flatType2Price,
-                      Date applicationOpenDate, Date applicationCloseDate,
+                      LocalDate applicationOpenDate, LocalDate applicationCloseDate,
                       HDBManager manager, int availableSlots, List<HDBOfficer> officerList) {
 
         this.projectName = projectName;
@@ -133,19 +133,19 @@ public class BTOProject {
         this.flatType2Price = flatType2Price;
     }
 
-    public Date getApplicationOpenDate() {
+    public LocalDate getApplicationOpenDate() {
         return applicationOpenDate;
     }
 
-    public void setApplicationOpenDate(Date applicationOpenDate) {
+    public void setApplicationOpenDate(LocalDate applicationOpenDate) {
         this.applicationOpenDate = applicationOpenDate;
     }
 
-    public Date getApplicationCloseDate() {
+    public LocalDate getApplicationCloseDate() {
         return applicationCloseDate;
     }
 
-    public void setApplicationCloseDate(Date applicationCloseDate) {
+    public void setApplicationCloseDate(LocalDate applicationCloseDate) {
         this.applicationCloseDate = applicationCloseDate;
     }
 

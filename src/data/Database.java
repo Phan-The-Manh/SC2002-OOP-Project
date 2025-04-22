@@ -162,8 +162,8 @@ public class Database {
                                     price1,
                                     units2,
                                     price2,
-                                    java.sql.Date.valueOf(openDate),
-                                    java.sql.Date.valueOf(closeDate),
+                                    openDate,
+                                    closeDate,
                                     manager,
                                     officerSlot,
                                     assignedOfficers

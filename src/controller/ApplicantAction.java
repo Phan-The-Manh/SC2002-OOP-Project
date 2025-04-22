@@ -107,7 +107,7 @@ public class ApplicantAction {
                         System.out.println("Invalid choice. Please try again.");
                 }
             } else {
-                System.out.println("❌ Invalid input. Please enter a number (1-7).");
+                System.out.println(" Invalid input. Please enter a number (1-7).");
                 scanner.nextLine(); // Clear invalid input
             }
         }
