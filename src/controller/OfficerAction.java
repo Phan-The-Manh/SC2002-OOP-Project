@@ -22,12 +22,13 @@ public class OfficerAction {
                         while (continueApplicantActions){
                             System.out.println("\n===== Applicant Actions =====");
                             System.out.println("1. View Available Projects");
-                            System.out.println("2. Apply for a Project");
-                            System.out.println("3. View My Application Status");
-                            System.out.println("4. Request Withdrawal of Application");
-                            System.out.println("5. Submit an Enquiry");
-                            System.out.println("6. View/Edit/Delete My Enquiries");
-                            System.out.println("7. Back");
+                            System.out.println("2. Filter Projects by Room Type");
+                            System.out.println("3. Apply for a Project");
+                            System.out.println("4. View My Application Status");
+                            System.out.println("5. Request Withdrawal of Application");
+                            System.out.println("6. Submit an Enquiry");
+                            System.out.println("7. View/Edit/Delete My Enquiries");
+                            System.out.println("8. Back");
             
                             System.out.print("Choose an action: ");
             
@@ -40,18 +41,44 @@ public class OfficerAction {
                                         officerController.viewAvailableProjects();
                                         break;
                                     case 2:
-                                        officerController.applyForProject();
+                                        System.out.println("\n===== Filter by Room Type =====");
+                                        System.out.println("1. 2-Room Projects");
+                                        System.out.println("2. 3-Room Projects");
+                                        int filterChoice;
+                                        while (true) {
+                                            System.out.print("Enter your fitlter choice: ");
+                                            if (scanner.hasNextInt()) {
+                                                filterChoice = scanner.nextInt();
+                                                break; // valid input, exit loop
+                                            } else {
+                                                System.out.println("Invalid input. Please enter a valid choice.");
+                                                scanner.next(); // consume the invalid input
+                                            }
+                                        }
+                                        switch(filterChoice){
+                                            case 1:
+                                                officerController.viewAvailableProjectsByRoomType(1);;
+                                                break;
+                                            case 2:
+                                                officerController.viewAvailableProjectsByRoomType(2);
+                                                break;
+                                            default:
+                                                System.out.println("Invalid choice. Please try again.");
+                                        }
                                         break;
                                     case 3:
-                                        officerController.viewApplicationStatus();
+                                        officerController.applyForProject();
                                         break;
                                     case 4:
-                                        officerController.requestWithdrawal();
+                                        officerController.viewApplicationStatus();
                                         break;
                                     case 5:
-                                        officerController.submitEnquiry();
+                                        officerController.requestWithdrawal();
                                         break;
                                     case 6:
+                                        officerController.submitEnquiry();
+                                        break;
+                                    case 7:
                                         System.out.println("\n===== Enquiry Actions =====");
                                         System.out.println("1. View Enquiries");
                                         System.out.println("2. Edit Enquiry");
@@ -82,7 +109,7 @@ public class OfficerAction {
                                         }
                                         break;
             
-                                    case 7:
+                                    case 8:
                                         System.out.println("Back");
                                         continueApplicantActions = false;
                                         break;
@@ -125,7 +152,7 @@ public class OfficerAction {
                                         officerController.viewApplicationByStatus();
                                         break;
                                     case 4:
-                                        //officerController.approveFlatBooking();
+                                        officerController.approveFlatBooking();
                                         break;
                                     case 5:
                                         officerController.generateReceipt();

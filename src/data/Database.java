@@ -52,8 +52,8 @@ public class Database {
             System.err.println("Failed to load applicants: " + e.getMessage());
         }
     }
-    
 
+    
     private void loadOfficers(String path) {
         try (BufferedReader reader = new BufferedReader(new FileReader(path, StandardCharsets.UTF_8))) {
             reader.readLine(); // Skip header
@@ -94,6 +94,103 @@ public class Database {
             System.err.println("Failed to load managers: " + e.getMessage());
         }
     }
+
+    private void loadProjects(String path) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(path, StandardCharsets.UTF_8))) {
+            reader.readLine(); // Skip header
+            String line;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+    
+            while ((line = reader.readLine()) != null) {
+                // Split the line based on comma, ensuring we account for quotes in values (like officer names with commas).
+                String[] parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+    
+                // Make sure there are enough fields to process
+                if (parts.length >= 14) {
+                    try {
+                        // Extract the basic information from the CSV columns
+                        String projectName = parts[0].trim();
+                        String neighborhood = parts[1].trim();
+                        int units1 = Integer.parseInt(parts[3].trim());
+                        double price1 = Double.parseDouble(parts[4].trim());
+                        int units2 = Integer.parseInt(parts[6].trim());
+                        double price2 = Double.parseDouble(parts[7].trim());
+    
+                        // Parse application dates
+                        LocalDate openDate = LocalDate.parse(parts[8].trim(), formatter);
+                        LocalDate closeDate = LocalDate.parse(parts[9].trim(), formatter);
+    
+                        // Manager and officer slot
+                        String managerName = parts[10].trim();
+                        int officerSlot = Integer.parseInt(parts[11].trim());
+    
+                        // Parse the officers, which are now separated by a semicolon
+                        List<HDBOfficer> assignedOfficers = new ArrayList<>();
+                        String officerField = parts[12].trim().replace("\"", ""); // Remove extra quotes if they exist
+                        if (!officerField.isEmpty()) {
+                            // Split by semicolon for multiple officers
+                            String[] officerNames = officerField.split(";");
+                            for (String officerName : officerNames) {
+                                String trimmedName = officerName.trim();
+                                HDBOfficer officer = hdbOfficerList.stream()
+                                        .filter(o -> o.getName().trim().equalsIgnoreCase(trimmedName))
+                                        .findFirst()
+                                        .orElse(null);
+    
+                                if (officer != null) {
+                                    assignedOfficers.add(officer);
+                                }
+                            }
+                            
+                        }
+    
+                        // Parse visibility (this field is now after the officer list)
+                        boolean visible = Boolean.parseBoolean(parts[13].trim());
+    
+                        // Find the manager from the list
+                        HDBManager manager = hdbManagerList.stream()
+                                .filter(m -> m.getName().equalsIgnoreCase(managerName))
+                                .findFirst()
+                                .orElse(null);
+    
+                        // If manager exists, create and add the project
+                        if (manager != null) {
+                            BTOProject project = new BTOProject(
+                                    projectName,
+                                    neighborhood,
+                                    units1,
+                                    price1,
+                                    units2,
+                                    price2,
+                                    java.sql.Date.valueOf(openDate),
+                                    java.sql.Date.valueOf(closeDate),
+                                    manager,
+                                    officerSlot,
+                                    assignedOfficers
+                            );
+                            project.setVisibility(visible); // Set the visibility after the officer list
+                            project.setManager(manager);
+                            manager.addProject(project); // Add project to manager's list
+                            project.setOfficerList(assignedOfficers);
+                            btoProjectList.add(project);
+                            if (project.isVisible() == true){
+                                btoVisibleProjectList.add(project);
+                            }
+                        } else {
+                            System.err.println("Manager not found for project: " + projectName);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error processing line: " + line);
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to load projects: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 
     private void loadBTOApplicationList(String path) {
         try (BufferedReader reader = new BufferedReader(new FileReader(path, StandardCharsets.UTF_8))) {
@@ -147,94 +244,6 @@ public class Database {
         }
     }
 
-    private void loadProjects(String path) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(path, StandardCharsets.UTF_8))) {
-            reader.readLine(); // Skip header
-            String line;
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy");
-    
-            while ((line = reader.readLine()) != null) {
-                // Split the line based on comma, ensuring we account for quotes in values (like officer names with commas).
-                String[] parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-    
-                // Make sure there are enough fields to process
-                if (parts.length >= 14) {
-                    try {
-                        // Extract the basic information from the CSV columns
-                        String projectName = parts[0].trim();
-                        String neighborhood = parts[1].trim();
-                        int units1 = Integer.parseInt(parts[3].trim());
-                        double price1 = Double.parseDouble(parts[4].trim());
-                        int units2 = Integer.parseInt(parts[6].trim());
-                        double price2 = Double.parseDouble(parts[7].trim());
-    
-                        // Parse application dates
-                        LocalDate openDate = LocalDate.parse(parts[8].trim(), formatter);
-                        LocalDate closeDate = LocalDate.parse(parts[9].trim(), formatter);
-    
-                        // Manager and officer slot
-                        String managerName = parts[10].trim();
-                        int officerSlot = Integer.parseInt(parts[11].trim());
-    
-                        // Parse the officers, which are now separated by a semicolon
-                        List<HDBOfficer> assignedOfficers = new ArrayList<>();
-                        String officerField = parts[12].trim().replace("\"", ""); // Remove extra quotes if they exist
-                        if (!officerField.isEmpty()) {
-                            // Split by semicolon for multiple officers
-                            String[] officerNames = officerField.split(";");
-                            for (String officerName : officerNames) {
-                                String trimmedName = officerName.trim();
-                                HDBOfficer officer = hdbOfficerList.stream()
-                                        .filter(o -> o.getName().trim().equalsIgnoreCase(trimmedName))
-                                        .findFirst()
-                                        .orElse(null);
-    
-                                if (officer != null) {
-                                    assignedOfficers.add(officer);
-                                }
-                            }
-                        }
-    
-                        // Parse visibility (this field is now after the officer list)
-                        boolean visible = Boolean.parseBoolean(parts[13].trim());
-    
-                        // Find the manager from the list
-                        HDBManager manager = hdbManagerList.stream()
-                                .filter(m -> m.getName().equalsIgnoreCase(managerName))
-                                .findFirst()
-                                .orElse(null);
-    
-                        // If manager exists, create and add the project
-                        if (manager != null) {
-                            BTOProject project = new BTOProject(
-                                    projectName,
-                                    neighborhood,
-                                    units1,
-                                    price1,
-                                    units2,
-                                    price2,
-                                    java.sql.Date.valueOf(openDate),
-                                    java.sql.Date.valueOf(closeDate),
-                                    manager,
-                                    officerSlot,
-                                    assignedOfficers
-                            );
-                            project.setVisibility(visible); // Set the visibility after the officer list
-                            btoProjectList.add(project);
-                        } else {
-                            System.err.println("Manager not found for project: " + projectName);
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error processing line: " + line);
-                        e.printStackTrace();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to load projects: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
     
 
     public void getBTOProjectList() {
@@ -242,7 +251,7 @@ public class Database {
         if (btoProjectList.isEmpty()) {
             System.out.println("No available projects.");
         } else {
-            for (BTOProject project : btoProjectList) {
+            for (BTOProject project : btoVisibleProjectList) {
                 System.out.println("-----------------------------------");
                 System.out.printf("Project: %-30s | Neighborhood: %-20s\n", project.getProjectName(), project.getNeighborhood());
                 System.out.printf("2-Room: %-3d units at $%-8.2f | 3-Room: %-3d units at $%-8.2f\n",
@@ -262,6 +271,57 @@ public class Database {
 
                 System.out.println("\n-----------------------------------");
             }
+        }
+    }
+
+    public void getBTOProjectListByRoomType(int roomType) {
+        boolean flag = false;
+        switch (roomType){
+        case 1:
+            System.out.println("\n===== 2-Room BTO Projects =====");
+            for (BTOProject project : btoVisibleProjectList) {
+                if (project.getFlatType1Units() > 0){
+                    flag = true;
+                    System.out.println("-----------------------------------");
+                    System.out.printf("Project: %-30s | Neighborhood: %-20s\n", project.getProjectName(), project.getNeighborhood());
+                    System.out.printf("2-Room: %-3d units at $%-8.2f\n",project.getFlatType1Units(), project.getFlatType1Price());
+                    System.out.printf("Application Period: %-10s to %-10s\n", project.getApplicationOpenDate(), project.getApplicationCloseDate());
+                    System.out.print("Manager: ");
+                    System.out.println(project.getManager().getName());
+                    System.out.print("Officers: ");
+                    for (HDBOfficer officer : project.getOfficerList()) {
+                        System.out.print(officer.getName() + " ");
+                    }
+                System.out.println("\n-----------------------------------");
+                }
+            }
+            if (!flag) 
+                System.out.println("No available projects.");
+            break;
+        case 2:
+            System.out.println("\n===== 3-Room BTO Projects =====");
+            for (BTOProject project : btoVisibleProjectList) {
+                if (project.getFlatType2Units() > 0){
+                    flag = true;
+                    System.out.println("-----------------------------------");
+                    System.out.printf("Project: %-30s | Neighborhood: %-20s\n", project.getProjectName(), project.getNeighborhood());
+                    System.out.printf("3-Room: %-3d units at $%-8.2f\n",project.getFlatType2Units(), project.getFlatType2Price());
+                    System.out.printf("Application Period: %-10s to %-10s\n", project.getApplicationOpenDate(), project.getApplicationCloseDate());
+                    System.out.print("Manager: ");
+                    System.out.println(project.getManager().getName());
+                    System.out.print("Officers: ");
+                    for (HDBOfficer officer : project.getOfficerList()) {
+                        System.out.print(officer.getName() + " ");
+                    }
+                System.out.println("\n-----------------------------------");
+                }
+            }
+            if (!flag) 
+                System.out.println("No available projects.");
+            break;
+        default:
+            System.out.println("Invalid Room Type");
+            break;
         }
     }
 

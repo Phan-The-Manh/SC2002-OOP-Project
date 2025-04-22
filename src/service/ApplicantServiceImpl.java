@@ -51,46 +51,79 @@ public class ApplicantServiceImpl implements ApplicantService {
     @Override
     public void viewAvailableProjects(Applicant applicant) {
         if (applicant.getMaritalStatus().equals("Single") && applicant.getAge() >= 35){
-            db.get2RoomBTOProjectList();
+            db.getBTOProjectListByRoomType(1);  // Fetch available projects for singles aged 35 and above
         }
         else 
             db.getBTOProjectList();  // Fetch available projects from the database*/
     }
 
     @Override
+    public void viewAvailableProjectsByRoomType(Applicant applicant, int roomType){
+        switch(roomType){
+            case 1: 
+                db.getBTOProjectListByRoomType(1);
+                break;
+            case 2:
+                if (applicant.getMaritalStatus().equals("Single") && applicant.getAge() >= 35){
+                    System.out.println("You cannot view this room type");
+                }
+                else{
+                    db.getBTOProjectListByRoomType(2);
+                }
+                break;
+            default:
+                System.out.println("Invalid Room Type");
+                break;
+        }
+    }
+
+    @Override
     public void applyForProject(Applicant applicant, String projectName, int roomType) {
         List<BTOProject> projectList = db.btoProjectList;
-        if (applicant.getMaritalStatus().equals("Single") && applicant.getAge() >= 35 && roomType == 2)
-            System.out.println("Room type is not applicable");
-        
-        // Find project by name
-        else{BTOProject project = null;
+
+        // Kiểm tra điều kiện không hợp lệ với người độc thân
+        if (applicant.getMaritalStatus().equalsIgnoreCase("Single") && applicant.getAge() >= 35 && roomType == 2) {
+            System.out.println("Room type is not applicable for single applicants aged 35 and above.");
+            return;
+        }
+
+        // Tìm project theo tên
+        BTOProject project = null;
         for (BTOProject p : projectList) {
             if (p.getProjectName().equalsIgnoreCase(projectName.trim())) {
                 project = p;
                 break;
             }
         }
-    
-        if (project != null) {
-            BTOApplication application = new BTOApplication(applicant, project.getProjectName());
-            if (application != null) {
-                application.setStatus("Pending");
-                application.setRequestedWithdrawal(false);
-                application.setRoomType(roomType);
-                applicant.setApplications(application);
-                BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
-                btoApplicationService.saveBTOApplication(application);
-                System.out.println("\nApplication applied successfully!");
-                System.out.println("---------------------------------------------");
-                System.out.printf("%-20s %-20s %-20s\n", "Project Name", "Room Type", "Status");
-                System.out.printf("%-20s %-20d %-20s\n", application.getProjectName(),application.getRoomType(), application.getStatus());
-            }   
-        } else {
+
+        if (project == null) {
             System.out.println("Project not found: " + projectName);
+            return;
         }
+
+        // Kiểm tra project có visible không
+        if (!project.isVisible()) {
+            System.out.println("The selected project is not currently available for application.");
+            return;
         }
+
+        // Tiến hành tạo application
+        BTOApplication application = new BTOApplication(applicant, project.getProjectName());
+        application.setStatus("Pending");
+        application.setRequestedWithdrawal(false);
+        application.setRoomType(roomType);
+
+        applicant.setApplications(application);
+        BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
+        btoApplicationService.saveBTOApplication(application);
+
+        // Hiển thị thông tin xác nhận
+        System.out.println("\nApplication applied successfully!");
+        System.out.println("---------------------------------------------");
+        System.out.printf("%-20s %-20s %-20s\n", "Project Name", "Room Type", "Status");
+        System.out.printf("%-20s %-20d %-20s\n", application.getProjectName(), application.getRoomType(), application.getStatus());
     }
+
     
 
 
@@ -145,29 +178,35 @@ public class ApplicantServiceImpl implements ApplicantService {
     
     @Override
     public void submitEnquiry(Applicant applicant, String enquiryText, String projectName) {
-        Database db = new Database();
-        BTOProject project = null;
-        for (BTOProject p : db.btoProjectList) {
-            if (p.getProjectName().equalsIgnoreCase(projectName.trim())) {
-                project = p;
-                break;
-            }
-        }
-        if (project == null){
+        BTOProject project = db.btoProjectList.stream()
+                .filter(p -> p.getProjectName().equalsIgnoreCase(projectName.trim()))
+                .findFirst()
+                .orElse(null);
+    
+        if (project == null) {
             System.out.println("Project not found: " + projectName);
             return;
         }
+    
+        if (!project.isVisible()) {
+            System.out.println("Project '" + projectName + "' is currently not accepting enquiries.");
+            return;
+        }
+    
         Enquiry enquiry = new Enquiry(applicant.getUserId(), enquiryText, projectName);
         enquiry.setEnquiryDate(new java.sql.Date(System.currentTimeMillis()));
-        enquiry.setReply(""); // No reply yet
+        enquiry.setReply("");
         enquiry.setReplied(false);
+    
         applicant.addEnquiry(enquiry);
         EnquiryServiceImpl enquiryService = new EnquiryServiceImpl(db);
         enquiryService.saveEnquiry(enquiry);
+    
         System.out.println("\nEnquiry submitted successfully!");
         System.out.println("---------------------------------------------");
-        System.out.println(enquiry.toString());
+        System.out.println(enquiry);
     }
+    
 
     @Override
     public void viewEnquiry(Applicant applicant){

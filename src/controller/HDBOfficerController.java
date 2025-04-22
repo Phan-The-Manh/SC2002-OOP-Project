@@ -45,6 +45,12 @@ public class HDBOfficerController {
         hdbOfficerService.viewAvailableProjects(applicant); 
     }
 
+    public void viewAvailableProjectsByRoomType(int roomType) {
+        Applicant applicant = CurrentUser.<Applicant>getInstance().getUser();
+        hdbOfficerService.viewAvailableProjectsByRoomType(applicant, roomType);
+    }
+
+
     public void applyForProject() {
         // Get current user
         Applicant applicant = CurrentUser.<Applicant>getInstance().getUser();
@@ -290,7 +296,35 @@ public class HDBOfficerController {
     
 
     void approveFlatBooking(){
-        // Add code
+        HDBOfficer officer = (HDBOfficer) CurrentUser.<Applicant>getInstance().getUser();
+        String NRIC;
+        do {
+            System.out.print("Enter the NRIC of the applicant you want to approve flat booking: ");
+            NRIC = scanner.nextLine().trim();
+            if (NRIC.isEmpty()) {
+                System.out.println("Enquiry cannot be empty. Please try again.");
+            }
+        } while (NRIC.isEmpty());
+
+        Applicant applicant = null;
+        for (Applicant existingApplicant : db.applicantList){
+            if(existingApplicant.getNRIC().equalsIgnoreCase(NRIC)){
+                applicant = existingApplicant;
+            }
+        }
+
+        for (Applicant existingApplicant : db.hdbOfficerList){
+            if(existingApplicant.getNRIC().equalsIgnoreCase(NRIC)){
+                applicant = existingApplicant;
+            }
+        }
+
+        if (applicant != null){
+            hdbOfficerService.approveFlatBooking(applicant, applicant.getApplications());
+        }
+        else{
+            System.out.println("Applicant not found");
+        }
     }
 
     void viewProjectEnquiry(){
@@ -358,10 +392,5 @@ public class HDBOfficerController {
             System.out.println("Applicant not found");
         }
     }
-
-
-
-
-
 
 }

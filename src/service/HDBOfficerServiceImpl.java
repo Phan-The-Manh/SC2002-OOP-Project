@@ -45,10 +45,24 @@ public class HDBOfficerServiceImpl extends ApplicantServiceImpl implements HDBOf
 
     @Override
     public void applyForProject(Applicant officer, String projectName, int roomType) {
-        officer = (HDBOfficer)officer;
+        if (!(officer instanceof HDBOfficer)) {
+            System.out.println("Only HDB officers can apply using this method.");
+            return;
+        }
+
+        HDBOfficer hdbOfficer = (HDBOfficer) officer;
+        for (BTOProject project : db.btoProjectList) {
+            List<HDBOfficer> officerList = project.getOfficerList();
+            for (HDBOfficer o : officerList) {
+                if (o.getName().equalsIgnoreCase(hdbOfficer.getName())) {
+                    hdbOfficer.setProjectAssigned(project);
+                    hdbOfficer.setRegisteredForProject(true);
+                    break;
+                }
+            }
+        }
         List<BTOProject> projectList = db.btoProjectList;
-    
-        // Find project by name
+
         BTOProject project = null;
         for (BTOProject p : projectList) {
             if (p.getProjectName().equalsIgnoreCase(projectName.trim())) {
@@ -57,34 +71,44 @@ public class HDBOfficerServiceImpl extends ApplicantServiceImpl implements HDBOf
             }
         }
 
-        if(project == null){
+        if (project == null) {
             System.out.println("Project not found: " + projectName);
             return;
         }
-        else if (((HDBOfficer)officer).getProjectAssigned() == null || !(((HDBOfficer)officer).getProjectAssigned().getProjectName().equals(projectName))){
-            if (officer.getMaritalStatus().equals("Single") && officer.getAge() >= 35 && roomType == 2){
-                System.out.println("Room type is not applicable");
-                return;
-            }
-            BTOApplication application = new BTOApplication(officer, project.getProjectName());
-            if (application != null) {
-                application.setStatus("Pending");  // Update status to pending withdrawal
-                application.setRequestedWithdrawal(false);
-                application.setRoomType(roomType);
-                officer.setApplications(application);
-                BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
-                btoApplicationService.saveBTOApplication(application);
-                System.out.println("\nApplication applied successfully!");
-                System.out.println("---------------------------------------------");
-                System.out.printf("%-20s %-20s %-20s\n", "Project Name", "Room Type", "Status");
-                System.out.printf("%-20s %-20d %-20s\n", application.getProjectName(),application.getRoomType(), application.getStatus());
-            }   
-        } 
-        else {
-            System.out.println("HDB Officer has already been registered for project: " + projectName);
+        if (!project.isVisible()) {
+            System.out.println("The selected project is currently hidden and cannot be applied for.");
             return;
         }
+
+        if (hdbOfficer.getProjectAssigned() != null &&
+            hdbOfficer.getProjectAssigned().getProjectName().equalsIgnoreCase(projectName)) {
+            System.out.println("HDB Officer has already been assigned to project: " + projectName);
+            return;
+        }
+
+        if (officer.getMaritalStatus().equalsIgnoreCase("Single") &&
+            officer.getAge() >= 35 &&
+            roomType == 2) {
+            System.out.println("Room type is not applicable for single applicants aged 35 and above.");
+            return;
+        }
+
+        // Tạo application
+        BTOApplication application = new BTOApplication(officer, project.getProjectName());
+        application.setStatus("Pending");
+        application.setRequestedWithdrawal(false);
+        application.setRoomType(roomType);
+
+        officer.setApplications(application);
+        BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
+        btoApplicationService.saveBTOApplication(application);
+
+        System.out.println("\nApplication applied successfully!");
+        System.out.println("---------------------------------------------");
+        System.out.printf("%-20s %-20s %-20s\n", "Project Name", "Room Type", "Status");
+        System.out.printf("%-20s %-20d %-20s\n", application.getProjectName(), application.getRoomType(), application.getStatus());
     }
+
 
     @Override
     public void registerForProject(HDBOfficer officer, BTOProject project) {
@@ -130,24 +154,34 @@ public class HDBOfficerServiceImpl extends ApplicantServiceImpl implements HDBOf
 
     @Override 
     public void viewApplicationByStatus(HDBOfficer officer, String status){
-        if (officer.getProjectAssigned() == null){
-            System.out.println("Officer has not registered for any project");
-            return;
-        }
-        else {
-            Database db = new Database();
-            System.out.println("Project with status: " + status);
-            for (BTOApplication application : db.btoApplicationList){
-                if (application.getProjectName().equalsIgnoreCase(officer.getProjectAssigned().getProjectName()) && application.getStatus().equalsIgnoreCase(status)){
-                    System.out.println(application.toString());
+        for (BTOProject project : db.btoProjectList) {
+            List<HDBOfficer> officerList = project.getOfficerList();
+            for (HDBOfficer o : officerList) {
+                if (o.getName().equalsIgnoreCase(officer.getName())) {
+                    officer.setProjectAssigned(project);
+                    officer.setRegisteredForProject(true);
+                    break;
                 }
             }
         }
+
+        if (officer.getProjectAssigned() == null) {
+            System.out.println("Officer has not registered for any project.");
+            return;
+        }
+    
+        System.out.println("Project with status: " + status);
+        for (BTOApplication application : db.btoApplicationList) {
+            if(application.getStatus().equalsIgnoreCase(status) && application.getProjectName().equalsIgnoreCase(officer.getProjectAssigned().getProjectName())) {
+                System.out.printf("%-20s %-20s %-20s %-20s\n", "Applicant ID", "Project Name", "Room Type", "Status");
+                System.out.printf("%-20s %-20s %-20d %-20s\n",application.getApplicant().getUserId(), application.getProjectName(), application.getRoomType(), application.getStatus());
+            }
+        }
     }
+    
 
     @Override
     public void approveFlatBooking(Applicant applicant, BTOApplication application) {
-        Database db = new Database();
         if (application.getStatus().equals("Pending Booking")) {
             BTOProject project = null;
             for (BTOProject p : db.btoProjectList) {
@@ -156,13 +190,26 @@ public class HDBOfficerServiceImpl extends ApplicantServiceImpl implements HDBOf
                     break;
                 }
             }
-
+            //Change application Status
             application.setStatus("Booked");
             BTOApplicationServiceImpl btoApplicationService = new BTOApplicationServiceImpl(db);
             btoApplicationService.saveBTOApplication(application);
 
-            //Add a method to decrease number of available flat.
+            //Decrease number of flat availability
+            BTOProjectServiceImpl btoProjectService = new BTOProjectServiceImpl(db);
+            switch(application.getRoomType()) {
+                case 1: 
+                    int availableUnit1= project.getFlatType1Units() - 1;
+                    project.setFlatType1Units(availableUnit1);
+                    break;
+                case 2:
+                    int availableUnit2= project.getFlatType2Units() - 1;
+                    project.setFlatType2Units(availableUnit2);
+                    break;
+            }
+            btoProjectService.saveProject(project);
 
+            //Saving new Flat Booking
             int flatType = application.getRoomType();
             FlatBooking booking = new FlatBooking(applicant, project, flatType);
             FlatBookingServiceImpl flatBookingService = new FlatBookingServiceImpl(db);
@@ -172,33 +219,68 @@ public class HDBOfficerServiceImpl extends ApplicantServiceImpl implements HDBOf
             System.out.printf("%-20s %-20s %-20s\n", "Applicant Name", "Project Name", "Room Type");
             System.out.printf("%-20s %-20s %-20d\n", applicant.getName(), application.getProjectName(),application.getRoomType());
         } else {
-             System.out.println("Application status is not successful. Cannot approve flat booking.");
+             System.out.println("Cannot approve flat booking.");
         }
     }
 
     @Override
-    public void viewProjectEnquiry(HDBOfficer officer){
-        Database db = new Database();
-        if (officer.getProjectAssigned() == null){
-            System.out.println("Officer has not registered for any project");
+    public void viewProjectEnquiry(HDBOfficer officer) {
+        // Assign project if not already set
+        if (officer.getProjectAssigned() == null) {
+            for (BTOProject project : db.btoProjectList) {
+                for (HDBOfficer o : project.getOfficerList()) {
+                    if (o.getName().equalsIgnoreCase(officer.getName())) {
+                        officer.setProjectAssigned(project);
+                        officer.setRegisteredForProject(true);
+                        break;
+                    }
+                }
+                if (officer.getProjectAssigned() != null) break;
+            }
+        }
+    
+        BTOProject project = officer.getProjectAssigned();
+    
+        if (project == null) {
+            System.out.println("Officer has not registered for any project.");
             return;
         }
-        BTOProject project = officer.getProjectAssigned();
-        System.out.println("\nList of Enquiries of Project: " + project.getProjectName());
-        System.out.println("---------------------------------------------");
-        for (int i = 0; i < project.getEnquiries().size(); i++){
-            System.out.println("Index: " + i +" | " + project.getEnquiries().get(i).toString());
+    
+        List<Enquiry> enquiries = project.getEnquiries();
+    
+        if (enquiries == null || enquiries.isEmpty()) {
+            System.out.println("\nNo enquiries found for project: " + project.getProjectName());
+            return;
+        }
+    
+        System.out.println("\nList of Enquiries for Project: " + project.getProjectName());
+        System.out.println("------------------------------------------------------------");
+        for (int i = 0; i < enquiries.size(); i++) {
+            System.out.println("Index: " + i + " | " + enquiries.get(i));
         }
     }
+    
+
 
     @Override
     public void replyToEnquiry(HDBOfficer officer, int index, String replyText) {
-        Database db = new Database();
-        if (officer.getProjectAssigned() == null){
-            System.out.println("Officer has not registered for any project");
-            return;
+        if (officer.getProjectAssigned() == null) {
+            for (BTOProject project : db.btoProjectList) {
+                for (HDBOfficer o : project.getOfficerList()) {
+                    if (o.getName().equalsIgnoreCase(officer.getName())) {
+                        officer.setProjectAssigned(project);
+                        officer.setRegisteredForProject(true);
+                        break;
+                    }
+                }
+                if (officer.getProjectAssigned() != null) break;
+            }
         }
         BTOProject project = officer.getProjectAssigned();
+        if (project == null) {
+            System.out.println("Officer has not registered for any project.");
+            return;
+        }
         if (index >= 0 && index < project.getEnquiries().size()) {
             Enquiry enquiry = project.getEnquiries().get(index);
             if (enquiry.isReplied()){
@@ -218,7 +300,6 @@ public class HDBOfficerServiceImpl extends ApplicantServiceImpl implements HDBOf
 
     @Override
     public void generateReceipt(Applicant applicant, BTOApplication application) {
-        Database db = new Database();
         if (application.getStatus().equals("Booked")) {
             BTOProject project = null;
             for (BTOProject p : db.btoProjectList) {

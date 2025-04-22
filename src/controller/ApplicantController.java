@@ -51,6 +51,11 @@ public class ApplicantController {
         applicantService.viewAvailableProjects(applicant); 
     }
 
+    public void viewAvailableProjectsByRoomType(int roomType) {
+        Applicant applicant = CurrentUser.<Applicant>getInstance().getUser();
+        applicantService.viewAvailableProjectsByRoomType(applicant, roomType);
+    }
+
     public void applyForProject() {
     
         // Get current user

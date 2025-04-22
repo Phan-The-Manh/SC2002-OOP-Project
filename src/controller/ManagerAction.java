@@ -13,7 +13,7 @@ public class ManagerAction {
             System.out.println("1. View All Projects");
             System.out.println("2. Manage Project (Create, Edit, Delete)");
             System.out.println("3. Toggle Project Visibility");
-            System.out.println("4. Filter Created Projects");
+            System.out.println("4. Filter Created Projects by Application Period");
             System.out.println("5. View HDB Officer Registration");
             System.out.println("6. Approve/Reject HDB Officer Registration");
             System.out.println("7. Approve/Reject Applicant BTO Application");
@@ -70,9 +70,9 @@ public class ManagerAction {
                     case 3:
                         managerController.toggleProjectVisibility();
                         break;
-                    // case 4:
-                    //     managerController.filterCreatedProjects();
-                    //     break;
+                    case 4:
+                        managerController.filterProject();
+                        break;
                     case 5:
                         managerController.viewOfficerRegistrations();
                         break;
@@ -85,19 +85,19 @@ public class ManagerAction {
                     case 8:
                         managerController.manageWithdrawalRequest();
                         break;
-                    // case 9:
-                    //     managerController.generateReport();
-                    //     break;
                     case 9:
+                        managerController.generateReport();
+                        break;
+                    case 10:
                         managerController.viewEnquiries();
                         break;
-                    // case 10:
-                    //     managerController.replyToEnquiries();
-                    //     break;
-                    // case 11:
-                    //     System.out.println("Logging out...");
-                    //     continueActions = false;
-                    //     break;
+                    case 11:
+                        managerController.replyToEnquiry();
+                        break;
+                    case 12:
+                        System.out.println("Logging out...");
+                        continueActions = false;
+                        break;                    
                     default:
                         System.out.println("Invalid choice. Please try again.");
                 }

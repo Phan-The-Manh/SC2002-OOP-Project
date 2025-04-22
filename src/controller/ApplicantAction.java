@@ -3,20 +3,21 @@ package controller;
 import java.util.Scanner;
 
 public class ApplicantAction {
-    Scanner scanner = new Scanner(System.in);
     public void applicantAction() {
         ApplicantController applicantController = new ApplicantController();
+        Scanner scanner = new Scanner(System.in);
         boolean continueActions = true;
 
         while (continueActions) {
             System.out.println("\n===== Applicant Actions =====");
             System.out.println("1. View Available Projects");
-            System.out.println("2. Apply for a Project");
-            System.out.println("3. View My Application Status");
-            System.out.println("4. Request Withdrawal of Application");
-            System.out.println("5. Submit an Enquiry");
-            System.out.println("6. View/Edit/Delete My Enquiries");
-            System.out.println("7. Logout");
+            System.out.println("2. Filter Projects by Room Type");
+            System.out.println("3. Apply for a Project");
+            System.out.println("4. View My Application Status");
+            System.out.println("5. Request Withdrawal of Application");
+            System.out.println("6. Submit an Enquiry");
+            System.out.println("7. View/Edit/Delete My Enquiries");
+            System.out.println("8. Logout");
 
             System.out.print("Choose an action: ");
 
@@ -30,18 +31,44 @@ public class ApplicantAction {
                         applicantController.viewAvailableProjects();
                         break;
                     case 2:
-                        applicantController.applyForProject();
+                        System.out.println("\n===== Filter by Room Type =====");
+                        System.out.println("1. 2-Room Projects");
+                        System.out.println("2. 3-Room Projects");
+                        int filterChoice;
+                        while (true) {
+                            System.out.print("Enter your fitlter choice: ");
+                            if (scanner.hasNextInt()) {
+                                filterChoice = scanner.nextInt();
+                                break; // valid input, exit loop
+                            } else {
+                                System.out.println("Invalid input. Please enter a valid choice.");
+                                scanner.next(); // consume the invalid input
+                            }
+                        }
+                        switch(filterChoice){
+                            case 1:
+                                applicantController.viewAvailableProjectsByRoomType(1);;
+                                break;
+                            case 2:
+                                applicantController.viewAvailableProjectsByRoomType(2);
+                                break;
+                            default:
+                                System.out.println("Invalid choice. Please try again.");
+                        }
                         break;
                     case 3:
-                        applicantController.viewApplicationStatus();
+                        applicantController.applyForProject();
                         break;
                     case 4:
-                        applicantController.requestWithdrawal();
+                        applicantController.viewApplicationStatus();
                         break;
                     case 5:
-                        applicantController.submitEnquiry();
+                        applicantController.requestWithdrawal();
                         break;
                     case 6:
+                        applicantController.submitEnquiry();
+                        break;
+                    case 7:
                         System.out.println("\n===== Enquiry Actions =====");
                         System.out.println("1. View Enquiries");
                         System.out.println("2. Edit Enquiry");
@@ -72,7 +99,7 @@ public class ApplicantAction {
                         }
                         break;
 
-                    case 7:
+                    case 8:
                         System.out.println("Logging out...");
                         continueActions = false;
                         break;

@@ -1,9 +1,9 @@
 package service;
 
 import data.Database;
-import model.ProjectRegistration;
 import java.io.*;
 import java.util.*;
+import model.ProjectRegistration;
 
 public class ProjectRegistrationServiceImpl implements ProjectRegistrationService {
     private final Database db;
@@ -72,4 +72,5 @@ public class ProjectRegistrationServiceImpl implements ProjectRegistrationServic
             e.printStackTrace();
         }
     }
+
 }

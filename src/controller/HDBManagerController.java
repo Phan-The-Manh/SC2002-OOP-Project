@@ -515,10 +515,6 @@ public class HDBManagerController {
     
         System.out.println("Withdrawal request has been " + (approve ? "approved." : "rejected."));
     }
-    
-    public void viewEnquiries() {
-        hdbManagerService.viewEnquiries();
-    }
 
     public void viewOfficerRegistrations() {
         Database db = new Database();
@@ -587,5 +583,97 @@ public class HDBManagerController {
         hdbManagerService.manageHDBOfficerRegistration(selected, approve);
     }
 
+    public void viewEnquiries() {
+        hdbManagerService.viewEnquiries();
+    }
 
+    public void replyToEnquiry() {
+        Database db = new Database();
+        Scanner sc = new Scanner(System.in);
+        HDBManager manager = CurrentUser.<HDBManager>getInstance().getUser();
+    
+        if (manager == null) {
+            System.out.println("No manager is currently logged in.");
+            return;
+        }
+    
+        // Lọc danh sách enquiry liên quan đến manager
+        List<Enquiry> allEnquiries = db.enquiryList;
+        List<Enquiry> relevantEnquiries = new ArrayList<>();
+    
+        for (Enquiry enquiry : allEnquiries) {
+            for (BTOProject project : db.btoProjectList) {
+                if (project.isVisible()
+                        && project.getManager().getUserId().equals(manager.getUserId())
+                        && enquiry.getProjectName().equalsIgnoreCase(project.getProjectName())) {
+                    relevantEnquiries.add(enquiry);
+                    break;
+                }
+            }
+        }
+    
+        if (relevantEnquiries.isEmpty()) {
+            System.out.println("No enquiries found for your projects.");
+            return;
+        }
+    
+        // Hiển thị danh sách enquiry
+        System.out.println("Enquiries for your projects:");
+        for (int i = 0; i < relevantEnquiries.size(); i++) {
+            Enquiry e = relevantEnquiries.get(i);
+            System.out.printf("[%d] Project: %s | From: %s | Question: %s | Replied: %s%n",
+                    i, e.getProjectName(), e.getApplicantName(), e.getEnquiryText(), e.isReplied() ? "Yes" : "No");
+        }
+    
+        // Nhập chỉ số enquiry
+        System.out.print("Enter the index of the enquiry you want to reply to: ");
+        int index;
+        try {
+            index = Integer.parseInt(sc.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a number.");
+            return;
+        }
+    
+        if (index < 0 || index >= relevantEnquiries.size()) {
+            System.out.println("Invalid index.");
+            return;
+        }
+    
+        Enquiry selectedEnquiry = relevantEnquiries.get(index);
+    
+        // Nhập phản hồi
+        System.out.print("Enter your reply: ");
+        String replyText = sc.nextLine();
+    
+        // Gọi hàm xử lý phản hồi
+        hdbManagerService.replyToEnquiry(manager, selectedEnquiry, replyText);
+    }
+
+    public void generateReport() {
+        HDBManager manager = CurrentUser.<HDBManager>getInstance().getUser();
+        if (manager == null) {
+            System.out.println("No manager is currently logged in.");
+            return;
+        }
+        // Ask the user for marital status filter criteria
+        System.out.println("Enter marital status filter (Single/Married/All): ");
+        String maritalStatus = scanner.nextLine().trim();
+
+        // Validate the input for marital status filter
+        while (!maritalStatus.equalsIgnoreCase("Single") && !maritalStatus.equalsIgnoreCase("Married") && !maritalStatus.equalsIgnoreCase("All")) {
+            System.out.println("Invalid input. Please enter 'Single', 'Married', or 'All': ");
+            maritalStatus = scanner.nextLine().trim();
+        }
+        hdbManagerService.generateReport(manager, maritalStatus);
+    }
+
+    public void filterProject(){
+        HDBManager manager = CurrentUser.<HDBManager>getInstance().getUser();
+        if (manager == null) {
+            System.out.println("No manager is currently logged in.");
+            return;
+        }
+        hdbManagerService.filterProject(manager);
+    }
 }

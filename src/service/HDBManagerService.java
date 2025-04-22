@@ -12,7 +12,8 @@ public interface HDBManagerService {
     void manageHDBOfficerRegistration(ProjectRegistration projectRegistration, boolean approve);
     void manageApplicantApplication(BTOApplication application, boolean approve);
     void manageWithdrawalRequest(BTOApplication application, boolean approve);
-    void generateReport(HDBManager manager, BTOProject project, String filterCriteria);
+    void generateReport(HDBManager manager, String filterCriteria);
     void viewEnquiries();
     void replyToEnquiry(HDBManager manager, Enquiry enquiry, String replyText);
+    void filterProject(HDBManager manager);
 }

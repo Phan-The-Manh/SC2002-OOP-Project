@@ -1,10 +1,11 @@
 package model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class HDBManager extends User {
 
-    private List<BTOProject> projects;
+    private List<BTOProject> projects = new ArrayList<>();
 
     // Constructor
     public HDBManager(String name, String userId, int age, String maritalStatus, String password) {
